@@ -1,9 +1,26 @@
 from setuptools import setup
 from setuptools.extension import Extension
-from distutils.sysconfig import get_config_var
+
+from distutils.command.build_ext import build_ext
+from distutils.sysconfig import get_config_var, customize_compiler
+
 import glob
 import os
 
+
+# use custom build_ext class that removes the -Wstrict-prototypes compiler flag
+# this flag is not supported for C++ and results in warnings
+class my_build_ext(build_ext):
+    def build_extensions(self):
+        customize_compiler(self.compiler)
+        try:
+            self.compiler.compiler_so.remove("-Wstrict-prototypes")
+        except (AttributeError, ValueError):
+            pass
+        build_ext.build_extensions(self)
+
+
+# helper class to get include directories for pybind11
 class get_pybind_include(object):
     def __init__(self, user=False):
         self.user = user
@@ -32,6 +49,7 @@ extensions = [
 setup(
     name = "py-compressed-decoder",
     packages = ['fklab.decode'],
-    ext_modules = extensions
+    ext_modules = extensions,
+    cmdclass = {'build_ext': my_build_ext},
 )
     
