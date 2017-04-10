@@ -121,7 +121,7 @@ void pybind_space(py::module &m) {
     
     
     // EUCLIDEAN SPACE CLASS
-    py::class_<EuclideanSpace>(m, "EuclideanSpace", py::base<Space>(),
+    py::class_<EuclideanSpace, Space>(m, "EuclideanSpace",
     R"pbdoc(
         N-dimensional euclidean space definition.
         
@@ -186,7 +186,7 @@ void pybind_space(py::module &m) {
     
     
     // CATEGORICAL SPACE CLASS
-    py::class_<CategoricalSpace>(m, "CategoricalSpace", py::base<Space>(),
+    py::class_<CategoricalSpace, Space>(m, "CategoricalSpace",
     R"pbdoc(
         1-dimensional categorical space definition.
         
@@ -227,7 +227,7 @@ void pybind_space(py::module &m) {
     
     
     // MULTIPLICATIVE SPACE CLASS
-    py::class_<MultiSpace>(m, "MultiSpace", py::base<Space>(),
+    py::class_<MultiSpace, Space>(m, "MultiSpace",
     R"pbdoc(
         Multiplicative space definition.
         
@@ -263,7 +263,7 @@ void pybind_space(py::module &m) {
     
     
     // CIRCULAR SPACE CLASS
-    py::class_<CircularSpace>(m, "CircularSpace", py::base<Space>(),
+    py::class_<CircularSpace, Space>(m, "CircularSpace",
     R"pbdoc(
         1-dimensional circular space definition.
         
@@ -309,7 +309,7 @@ void pybind_space(py::module &m) {
     
     
     // ENCODED SPACE CLASS
-    py::class_<EncodedSpace>(m, "EncodedSpace", py::base<Space>(),
+    py::class_<EncodedSpace, Space>(m, "EncodedSpace",
     R"pbdoc(
         1-dimensional encoded space definition.
         

@@ -44,7 +44,7 @@ void pybind_kernel(py::module &m) {
         
     )pbdoc" );
     
-    py::class_<GaussianKernel>(m,"GaussianKernel",py::base<Kernel>(),
+    py::class_<GaussianKernel, Kernel>(m,"GaussianKernel",
     R"pbdoc(
         Gaussian kernel function.
         
@@ -68,13 +68,13 @@ void pybind_kernel(py::module &m) {
     )pbdoc"
     );
     
-    py::class_<EpanechnikovKernel>(m,"EpanechnikovKernel",py::base<Kernel>(),
+    py::class_<EpanechnikovKernel, Kernel>(m,"EpanechnikovKernel",
     R"pbdoc(
         Epanechnikov kernel function.
     )pbdoc")
     .def(py::init<>());
     
-    py::class_<BoxKernel>(m,"BoxKernel",py::base<Kernel>(),
+    py::class_<BoxKernel, Kernel>(m,"BoxKernel",
     R"pbdoc(
         Box kernel function.
     )pbdoc")

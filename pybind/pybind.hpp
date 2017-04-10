@@ -6,8 +6,6 @@
 
 namespace py = pybind11;
 
-PYBIND11_DECLARE_HOLDER_TYPE(T, std::shared_ptr<T>);
-
 template <class T>
 std::vector<T> numpy_array_to_vector( py::array_t<T> & array ) {
     auto buf = array.request();
