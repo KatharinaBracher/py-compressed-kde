@@ -65,7 +65,7 @@ void pybind_likelihood(py::module &m) {
         
     )pbdoc")
     
-    .def("add_stimuli", [](StimulusOccupancy & obj, py::array_t<value> stimuli, unsigned int repetitions) {
+    .def("add_stimuli", [](StimulusOccupancy & obj, py::array_t<value, py::array::c_style | py::array::forcecast> stimuli, unsigned int repetitions) {
         
         unsigned int ndim = obj.ndim();
         unsigned int nsamples;
@@ -300,7 +300,7 @@ void pybind_likelihood(py::module &m) {
         
     )pbdoc")
     
-    .def("add_events", [](PoissonLikelihood & obj, py::array_t<value> events, unsigned int repetitions) {
+    .def("add_events", [](PoissonLikelihood & obj, py::array_t<value, py::array::c_style | py::array::forcecast> events, unsigned int repetitions) {
         
         unsigned int ndim = obj.ndim();
         unsigned int nsamples;
@@ -397,7 +397,7 @@ void pybind_likelihood(py::module &m) {
         
         //} )
     
-    .def("logL", [](PoissonLikelihood & obj, py::array_t<value> events, value delta_t)->py::array_t<value> {
+    .def("logL", [](PoissonLikelihood & obj, py::array_t<value, py::array::c_style | py::array::forcecast> events, value delta_t)->py::array_t<value> {
         
         unsigned int ndim = obj.ndim_events();
         unsigned int nsamples;
@@ -451,7 +451,7 @@ void pybind_likelihood(py::module &m) {
         
     )pbdoc")
     
-    .def("likelihood", [](PoissonLikelihood & obj, py::array_t<value> events, value delta_t)->py::array_t<value> {
+    .def("likelihood", [](PoissonLikelihood & obj, py::array_t<value, py::array::c_style | py::array::forcecast> events, value delta_t)->py::array_t<value> {
         
         unsigned int ndim = obj.ndim_events();
         unsigned int nsamples;
@@ -505,7 +505,7 @@ void pybind_likelihood(py::module &m) {
         
     )pbdoc")
     
-    .def("event_prob", [](PoissonLikelihood & obj, py::array_t<value> events)->py::array_t<value> {
+    .def("event_prob", [](PoissonLikelihood & obj, py::array_t<value, py::array::c_style | py::array::forcecast> events)->py::array_t<value> {
         
         unsigned int ndim = obj.ndim_events();
         unsigned int nsamples;
@@ -557,7 +557,7 @@ void pybind_likelihood(py::module &m) {
         
     )pbdoc")
     
-    .def("event_logp", [](PoissonLikelihood & obj, py::array_t<value> events)->py::array_t<value> {
+    .def("event_logp", [](PoissonLikelihood & obj, py::array_t<value, py::array::c_style | py::array::forcecast> events)->py::array_t<value> {
         
         unsigned int ndim = obj.ndim_events();
         unsigned int nsamples;
@@ -720,7 +720,7 @@ void pybind_likelihood(py::module &m) {
             
     )pbdoc")
     
-    .def("decode", [](Decoder & obj, std::vector<py::array_t<value>> events, value delta_t, bool normalize)->std::vector<py::array_t<value>> {
+    .def("decode", [](Decoder & obj, std::vector<py::array_t<value, py::array::c_style | py::array::forcecast>> events, value delta_t, bool normalize)->std::vector<py::array_t<value>> {
         
         std::vector<py::array_t<value>> out;
         std::vector<value*> out_ptr;
@@ -778,7 +778,7 @@ void pybind_likelihood(py::module &m) {
         list with posterior distribution for each of the union-ed stimulus spaces.
         
     )pbdoc")
-    .def("decode_single", [](Decoder & obj, std::vector<py::array_t<value>> events, value delta_t, unsigned int index, bool normalize)->py::array_t<value> {
+    .def("decode_single", [](Decoder & obj, std::vector<py::array_t<value, py::array::c_style | py::array::forcecast>> events, value delta_t, unsigned int index, bool normalize)->py::array_t<value> {
         
         // construct array buffer
         auto result = py::array( py::buffer_info(

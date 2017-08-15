@@ -135,7 +135,7 @@ void pybind_space(py::module &m) {
             
     )pbdoc")
 
-    .def( "__init__", [](EuclideanSpace & obj, std::vector<std::string> labels, const Kernel & kernel, py::array_t<value> bandwidth){
+    .def( "__init__", [](EuclideanSpace & obj, std::vector<std::string> labels, const Kernel & kernel, py::array_t<value, py::array::c_style | py::array::forcecast> bandwidth){
         auto bw = numpy_array_to_vector( bandwidth );
         new (&obj) EuclideanSpace( labels, kernel, bw );
     },
@@ -153,7 +153,7 @@ void pybind_space(py::module &m) {
             bandwidths for default kernel
     )pbdoc")
     
-    .def( "grid", [](const EuclideanSpace& obj, std::vector<py::array_t<value>> & v, py::array_t<bool> & valid, py::array_t<bool> & selection ) { 
+    .def( "grid", [](const EuclideanSpace& obj, std::vector<py::array_t<value, py::array::c_style | py::array::forcecast>> & v, py::array_t<bool, py::array::c_style | py::array::forcecast> & valid, py::array_t<bool, py::array::c_style | py::array::forcecast> & selection ) { 
         std::vector<std::vector<value>> vec( v.size() );
         for (unsigned int k=0; k<v.size(); ++k) {
             vec[k] = numpy_array_to_vector( v[k] );
@@ -323,7 +323,7 @@ void pybind_space(py::module &m) {
             Bandwidth for default gaussian kernel
         
     )pbdoc")
-    .def( "__init__", [](EncodedSpace & obj, std::string label, py::array_t<value> distances, value bandwidth) {
+    .def( "__init__", [](EncodedSpace & obj, std::string label, py::array_t<value, py::array::c_style | py::array::forcecast> distances, value bandwidth) {
         auto vec_distances = numpy_array_to_vector( distances );
         new (&obj) EncodedSpace( label, vec_distances, bandwidth );
     },

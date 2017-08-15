@@ -179,7 +179,7 @@ void pybind_mixture(py::module &m) {
         
     )pbdoc" )
     
-    .def("add", [](Mixture &m, py::array_t<value> samples) {
+    .def("add", [](Mixture &m, py::array_t<value, py::array::c_style | py::array::forcecast> samples) {
         
         unsigned int ndim = m.space().ndim();
         unsigned int nsamples;
@@ -210,7 +210,7 @@ void pybind_mixture(py::module &m) {
         
     )pbdoc")
     
-    .def("merge", [](Mixture &m, py::array_t<value> samples, bool random=true) {
+    .def("merge", [](Mixture &m, py::array_t<value, py::array::c_style | py::array::forcecast> samples, bool random=true) {
         
         unsigned int ndim = m.space().ndim();
         unsigned int nsamples;
@@ -243,7 +243,7 @@ void pybind_mixture(py::module &m) {
         
     )pbdoc")
     
-    .def("evaluate", [](Mixture &m, py::array_t<value> samples)->py::array_t<value> {
+    .def("evaluate", [](Mixture &m, py::array_t<value, py::array::c_style | py::array::forcecast> samples)->py::array_t<value> {
         
         unsigned int ndim = m.space().ndim();
         unsigned int nsamples;
@@ -332,7 +332,7 @@ void pybind_mixture(py::module &m) {
         
     )pbdoc" )
     
-    .def("partial", [](Mixture &m, py::array_t<value> samples, py::array_t<bool> selection)->py::array_t<value> {
+    .def("partial", [](Mixture &m, py::array_t<value, py::array::c_style | py::array::forcecast> samples, py::array_t<bool, py::array::c_style | py::array::forcecast> selection)->py::array_t<value> {
         
         auto vec_selection = numpy_array_to_vector( selection );
         
@@ -407,7 +407,7 @@ void pybind_mixture(py::module &m) {
         
     )pbdoc" )
     
-    .def("partialize", [](Mixture &m, py::array_t<value> samples, py::array_t<bool> selection)->PartialMixture* {
+    .def("partialize", [](Mixture &m, py::array_t<value, py::array::c_style | py::array::forcecast> samples, py::array_t<bool, py::array::c_style | py::array::forcecast> selection)->PartialMixture* {
         
         auto vec_selection = numpy_array_to_vector( selection );
         
@@ -442,7 +442,7 @@ void pybind_mixture(py::module &m) {
         
     )pbdoc")
     
-    .def("marginal", [](Mixture &m, py::array_t<value> samples, py::array_t<bool> selection)->py::array_t<value> {
+    .def("marginal", [](Mixture &m, py::array_t<value, py::array::c_style | py::array::forcecast> samples, py::array_t<bool, py::array::c_style | py::array::forcecast> selection)->py::array_t<value> {
         
         auto vec_selection = numpy_array_to_vector( selection );
         
@@ -583,7 +583,7 @@ void pybind_mixture(py::module &m) {
         
     )pbdoc")
     
-    .def("complete", [](PartialMixture &m, py::array_t<value> samples )->py::array_t<value> {
+    .def("complete", [](PartialMixture &m, py::array_t<value, py::array::c_style | py::array::forcecast> samples )->py::array_t<value> {
         
         // check sample array
         auto buf = samples.request();
