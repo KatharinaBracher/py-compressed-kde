@@ -20,7 +20,16 @@ std::vector<long unsigned int> shape_from_grids( const std::vector<Grid*> & grid
 MultiGrid::MultiGrid( const std::vector<Grid*> & grids, const std::vector<bool> & valid ) :
 GridBase<MultiGrid>( "multi", space_from_grids( grids ), shape_from_grids( grids ), valid ) {
     for (auto & k : grids) {
-        grids_.emplace_back( k->clone() );
+        if (k->klass()=="multi") {
+            // merge
+            auto other = dynamic_cast<MultiGrid*>(k);
+            if (other==nullptr) { throw std::runtime_error("Internal error: cannot cast to MultiGrid"); }
+            for (unsigned int c=0; c<other->ngrids(); ++c) {
+                grids_.emplace_back( other->subgrid(c).clone() );
+            }
+        } else {
+            grids_.emplace_back( k->clone() );
+        }
     }
 }
 
@@ -29,6 +38,10 @@ GridBase<MultiGrid>( other ) {
     for (auto & k : other.grids_) {
         grids_.emplace_back( k->clone() );
     }
+}
+
+unsigned int MultiGrid::ngrids() const {
+    return grids_.size();
 }
 
 const Grid & MultiGrid::subgrid(unsigned int index) {

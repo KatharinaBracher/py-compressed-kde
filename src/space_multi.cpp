@@ -4,7 +4,16 @@
 MultiSpace::MultiSpace( std::vector<const Space*> spaces ) :
 SpaceBase<MultiSpace>( "multi", make_spec(spaces), make_kernel(spaces) ) {
     for (auto & k : spaces) {
-        spaces_.emplace_back( k->clone() );
+        if (k->klass()=="multi") {
+            // merge
+            auto other = dynamic_cast<const MultiSpace*>(k);
+            if (other==nullptr) { throw std::runtime_error("Internal error: cannot cast to MultiSpace"); }
+            for (unsigned int c=0; c<other->nchildren(); ++c) {
+                spaces_.emplace_back( other->child(c).clone() );
+            }
+        } else {
+            spaces_.emplace_back( k->clone() );
+        }
     }
 }
 

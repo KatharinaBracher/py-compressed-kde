@@ -10,6 +10,7 @@ public:
     
     MultiGrid( const MultiGrid & other );
     
+    unsigned int ngrids() const;
     const Grid & subgrid(unsigned int index=0);
     
     virtual YAML::Node asYAML() const;
