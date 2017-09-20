@@ -3,7 +3,7 @@
 
 
 // yaml
-std::unique_ptr<Space> space_from_YAML( const YAML::Node & node ) {
+std::unique_ptr<Space> space_from_yaml( const YAML::Node & node ) {
     
     if (!node.IsMap() || !node["class"] ) {
         throw std::runtime_error("Not a valid YAML description of space.");

@@ -2,7 +2,7 @@
 #include <stdexcept>
 
 // yaml
-std::unique_ptr<Kernel> kernel_from_YAML( const YAML::Node & node ) {
+std::unique_ptr<Kernel> kernel_from_yaml( const YAML::Node & node ) {
     
     if (!node.IsMap() || !node["type"] ) {
         throw std::runtime_error("Not a valid YAML description of kernel.");
