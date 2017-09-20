@@ -28,7 +28,7 @@ void pybind_grid(py::module &m) {
     
     .def("to_yaml", [](Grid &obj)->std::string {
         YAML::Emitter out;
-        YAML::Node node = obj.toYAML();
+        YAML::Node node = obj.to_yaml();
         out << YAML::Flow;
         out << node;
         std::string s = out.c_str();
@@ -44,7 +44,7 @@ void pybind_grid(py::module &m) {
     
     .def_static("from_yaml", [](std::string s) {
         YAML::Node node = YAML::Load(s);
-        return std::unique_ptr<Grid>( grid_from_YAML( node ) ); },
+        return std::unique_ptr<Grid>( grid_from_yaml( node ) ); },
     py::arg("string"),
     R"pbdoc(
         Construct grid definition from YAML

@@ -19,20 +19,16 @@ value epanechnikov_scale_factor( unsigned ndim, value det, bool log ) {
     
 }
 
+// constructor
 EpanechnikovKernel::EpanechnikovKernel() : KernelBase<EpanechnikovKernel>(KernelType::Epanechnikov) {}
 
-YAML::Node EpanechnikovKernel::asYAML() const {
-    return YAML::Node();
-}
-EpanechnikovKernel * EpanechnikovKernel::fromYAML( const YAML::Node & node ) {
-    return new EpanechnikovKernel( );
-}
-
-value EpanechnikovKernel::scale_factor( unsigned int n, value * bw, bool log ) const {
+// methods
+value EpanechnikovKernel::scale_factor(unsigned int n, value * bw, bool log) const {
     value det = std::accumulate( bw, bw+n, std::pow(EPA_KERNEL_FACTOR,n), std::multiplies<value>() );
     return epanechnikov_scale_factor( n, det, log );
 }
-value EpanechnikovKernel::scale_factor( unsigned int n, value * bw, bool log, std::vector<bool>::const_iterator selection ) const {
+value EpanechnikovKernel::scale_factor( unsigned int n, value * bw, bool log, 
+    std::vector<bool>::const_iterator selection ) const {
     
     unsigned int ndim = 0;
     value det = 1.;
@@ -47,7 +43,9 @@ value EpanechnikovKernel::scale_factor( unsigned int n, value * bw, bool log, st
     
     return epanechnikov_scale_factor( ndim, det, log );
 }
-value EpanechnikovKernel::probability( unsigned int n, const value * loc, const value * bw, const value * point ) const {
+
+value EpanechnikovKernel::probability( unsigned int n, const value * loc, 
+    const value * bw, const value * point ) const {
     value tmp, d=0.;
     
     for (unsigned int k=0; k<n; ++k) {
@@ -63,7 +61,9 @@ value EpanechnikovKernel::probability( value dsquared ) const {
     if (dsquared>=1.) { return 0.; }
     else { return (1-dsquared); }
 }
-value EpanechnikovKernel::log_probability( unsigned int n, const value * loc, const value * bw, const value * point ) const {
+
+value EpanechnikovKernel::log_probability( unsigned int n, const value * loc, 
+    const value * bw, const value * point ) const {
     value tmp, d=0.;
     
     for (unsigned int k=0; k<n; ++k) {
@@ -79,7 +79,9 @@ value EpanechnikovKernel::log_probability( value dsquared ) const {
     if (dsquared>=1.) { return -std::numeric_limits<value>::infinity(); }
     else { return fastlog(1-dsquared); }
 }
-value EpanechnikovKernel::partial_logp( unsigned int n, const value * loc, const value * bw, const value * point, std::vector<bool>::const_iterator selection) const {
+
+value EpanechnikovKernel::partial_logp( unsigned int n, const value * loc, 
+    const value * bw, const value * point, std::vector<bool>::const_iterator selection) const {
     value tmp, d=0.;
     
     for (unsigned int k=0; k<n; ++k) {
@@ -93,3 +95,20 @@ value EpanechnikovKernel::partial_logp( unsigned int n, const value * loc, const
     return fastlog(1-d);
 }
 
+// yaml
+YAML::Node EpanechnikovKernel::to_yaml_impl() const {
+    return YAML::Node();
+}
+std::unique_ptr<EpanechnikovKernel> EpanechnikovKernel::from_yaml(
+    const YAML::Node & node ) {
+    return std::make_unique<EpanechnikovKernel>();
+}
+
+
+// hdf5
+void EpanechnikovKernel::to_hdf5_impl(HighFive::Group & group) const {}
+
+std::unique_ptr<EpanechnikovKernel> EpanechnikovKernel::from_hdf5(
+    const HighFive::Group & group) {
+    return std::make_unique<EpanechnikovKernel>();
+}

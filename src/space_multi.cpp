@@ -1,6 +1,7 @@
 #include "space_multi.hpp"
 #include "space.hpp"
 
+// constructor
 MultiSpace::MultiSpace( std::vector<const Space*> spaces ) :
 SpaceBase<MultiSpace>( "multi", make_spec(spaces), make_kernel(spaces) ) {
     for (auto & k : spaces) {
@@ -17,6 +18,7 @@ SpaceBase<MultiSpace>( "multi", make_spec(spaces), make_kernel(spaces) ) {
     }
 }
 
+// copy constructor
 MultiSpace::MultiSpace( const MultiSpace & other ) :
 SpaceBase<MultiSpace>( other ) {
     for (auto & k : other.spaces_) {
@@ -51,40 +53,22 @@ Component MultiSpace::make_kernel( std::vector<const Space*> spaces ) const {
     return k;
 }
 
-MultiSpace * MultiSpace::fromYAML( const YAML::Node & node ) {
+// grid construction
+Grid * MultiSpace::grid( const std::vector<Grid*> & grids, 
+    const std::vector<bool> & valid ) const {
     
-    std::vector<std::unique_ptr<Space>> spaces;
+    std::unique_ptr<MultiGrid> g = std::unique_ptr<MultiGrid>(
+        new MultiGrid( grids, valid ) );
     
-    if (!node["spaces"] || !node["spaces"].IsSequence()) {
-        throw std::runtime_error("Ill-formed multiplicative space definition.");
+    if (!specification().issubspace( g->specification() )) {
+        throw std::runtime_error("Grid space is not proper subspace.");
     }
     
-    unsigned int nspaces = node["spaces"].size();
+    return g.release();
     
-    for (unsigned int k=0; k<nspaces; ++k) {
-        spaces.emplace_back( space_from_YAML( node["spaces"][k] ) );
-    }
-    
-    std::vector<const Space*> pspaces;
-    for (auto & k : spaces) {
-        pspaces.push_back( k.get() );
-    }
-    
-    MultiSpace * p = new MultiSpace( pspaces );
-    
-    return p;
-}
+}    
 
-YAML::Node MultiSpace::asYAML() const {
-    YAML::Node node;
-    for (auto & k : spaces_) {
-        node["spaces"].push_back( k->toYAML() );
-    }
-    return node;
-}
-
-
-
+// methods
 value MultiSpace::compute_scale_factor( value * bw, bool log ) const {
    value s;
     if (log) {
@@ -103,7 +87,8 @@ value MultiSpace::compute_scale_factor( value * bw, bool log ) const {
     return s;
 }
 
-value MultiSpace::compute_scale_factor( std::vector<bool>::const_iterator selection, value * bw, bool log ) const {
+value MultiSpace::compute_scale_factor( std::vector<bool>::const_iterator selection, 
+    value * bw, bool log ) const {
    value s;
     if (log) {
         s = 0.;
@@ -123,7 +108,8 @@ value MultiSpace::compute_scale_factor( std::vector<bool>::const_iterator select
     return s;
 }
 
-value MultiSpace::mahalanobis_distance_squared( const value * refloc, const value * refbw, const value * targetloc, value threshold) const {
+value MultiSpace::mahalanobis_distance_squared( const value * refloc, 
+    const value * refbw, const value * targetloc, value threshold) const {
     
     value d = 0.;
     for (unsigned int k=0; k<spaces_.size(); ++k) {
@@ -141,7 +127,8 @@ value MultiSpace::mahalanobis_distance_squared( const value * refloc, const valu
     return d;
 }
 
-void MultiSpace::merge( value w1, value * loc1, value * bw1, value w2, const value * loc2, const value * bw2 ) const {
+void MultiSpace::merge( value w1, value * loc1, value * bw1, value w2, 
+    const value * loc2, const value * bw2 ) const {
 
     for (unsigned int k=0; k<spaces_.size(); ++k) {
         
@@ -156,7 +143,8 @@ void MultiSpace::merge( value w1, value * loc1, value * bw1, value w2, const val
         
 }
 
-value MultiSpace::probability( const value * loc, const value * bw, const value * point ) const {
+value MultiSpace::probability( const value * loc, const value * bw, 
+    const value * point ) const {
     
     value p = 1.;
     
@@ -171,11 +159,13 @@ value MultiSpace::probability( const value * loc, const value * bw, const value 
     
 }
 
-void MultiSpace::probability( const value * loc, const value * bw, const value * points, unsigned int n, value * result ) const {
+void MultiSpace::probability( const value * loc, const value * bw, 
+    const value * points, unsigned int n, value * result ) const {
     throw std::runtime_error("Not implemented: MultiSpace::probability");
 }
 
-value MultiSpace::log_probability( const value * loc, const value * bw, const value * point ) const {
+value MultiSpace::log_probability( const value * loc, const value * bw, 
+    const value * point ) const {
     
     value p = 0.;
     
@@ -190,11 +180,13 @@ value MultiSpace::log_probability( const value * loc, const value * bw, const va
     
 }
 
-void MultiSpace::log_probability( const value * loc, const value * bw, const value * points, unsigned int n, value * result ) const {
+void MultiSpace::log_probability( const value * loc, const value * bw, 
+    const value * points, unsigned int n, value * result ) const {
     throw std::runtime_error("Not implemented: MultiSpace::probability");
 }
 
-value MultiSpace::partial_logp( const value * loc, const value * bw, const value * point, std::vector<bool>::const_iterator selection ) const {
+value MultiSpace::partial_logp( const value * loc, const value * bw, 
+    const value * point, std::vector<bool>::const_iterator selection ) const {
     value p = 0;
     for (auto & k : spaces_) {
         p += k->partial_logp( loc, bw, point, selection ); // do not propagate scale
@@ -207,15 +199,75 @@ value MultiSpace::partial_logp( const value * loc, const value * bw, const value
     return p;
 }
 
-   
-Grid * MultiSpace::grid( const std::vector<Grid*> & grids, const std::vector<bool> & valid ) const {
+
+// yaml
+std::unique_ptr<MultiSpace> MultiSpace::from_yaml( const YAML::Node & node ) {
     
-    std::unique_ptr<MultiGrid> g = std::unique_ptr<MultiGrid>( new MultiGrid( grids, valid ) );
+    std::vector<std::unique_ptr<Space>> spaces;
     
-    if (!specification().issubspace( g->specification() )) {
-        throw std::runtime_error("Grid space is not proper subspace.");
+    if (!node["spaces"] || !node["spaces"].IsSequence()) {
+        throw std::runtime_error("Ill-formed multiplicative space definition.");
     }
     
-    return g.release();
+    unsigned int nspaces = node["spaces"].size();
+    
+    for (unsigned int k=0; k<nspaces; ++k) {
+        //spaces.emplace_back( space_from_YAML( node["spaces"][k] ) );
+        spaces.push_back(std::move(space_from_yaml(node["spaces"][k])));
+    }
+    
+    std::vector<const Space*> pspaces;
+    for (auto & k : spaces) {
+        pspaces.push_back( k.get() );
+    }
+    
+    return std::make_unique<MultiSpace>(pspaces);
+}
+
+YAML::Node MultiSpace::to_yaml_impl() const {
+    YAML::Node node;
+    for (auto & k : spaces_) {
+        node["spaces"].push_back( k->to_yaml() );
+    }
+    return node;
+}
+
+
+// hdf5
+void MultiSpace::to_hdf5_impl(HighFive::Group & group) const {
+    unsigned int s = 0;
+    
+    HighFive::Attribute attr = group.createAttribute<unsigned int>(
+            "nspace", HighFive::DataSpace::From(s));
+    attr.write(spaces_.size());
+    
+    for (auto & k : spaces_) {
+        HighFive::Group subgroup = group.createGroup("space" + std::to_string(s));
+        
+        k->to_hdf5(subgroup);
+        
+        ++s;
+    }
+}
+
+std::unique_ptr<MultiSpace> MultiSpace::from_hdf5(const HighFive::Group & group) {
+    
+    unsigned int nspace;
+    
+    HighFive::Attribute attr = group.getAttribute("nspace");
+    attr.read(nspace);
+    
+    std::vector<std::unique_ptr<Space>> s;
+    for (unsigned int k=0; k<nspace; ++k) {
+        HighFive::Group subgroup = group.getGroup("space" + std::to_string(k));
+        s.push_back(std::move(space_from_hdf5(subgroup)));
+    }
+    
+    std::vector<const Space*> ptr;
+    for (auto & k : s) {
+        ptr.push_back( k.get() );
+    }
+    
+    return std::make_unique<MultiSpace>( ptr );
     
 }

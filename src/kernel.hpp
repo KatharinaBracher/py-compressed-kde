@@ -8,16 +8,12 @@
 
 #include "yaml-cpp/yaml.h"
 
-Kernel * kernel_from_YAML( const YAML::Node & node );
+// yaml
+std::unique_ptr<Kernel> kernel_from_yaml( const YAML::Node & node );
 
+// hdf5
+std::unique_ptr<Kernel> kernel_from_hdf5( const HighFive::Group & group );
 
-//#include "yaml-cpp/yaml.h"
-
-//#include <vector>
-//#include <cmath>
-//#include <string>
-//#include <stdint.h>
-//#include <algorithm>
 
 
 

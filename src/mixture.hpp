@@ -11,23 +11,17 @@ class PartialMixture;
 
 class Mixture {
 public:
+    // constructor
     Mixture( const Space & space, value threshold = THRESHOLD );
     // copy constructor
     Mixture( const Mixture& other );
     
-    friend Mixture * mixture_from_YAML( const YAML::Node & node );
-    
-    YAML::Node toYAML() const;
-    
-    void save( std::ostream & stream ) const;
-    void save( std::string path ) const;
-    
     void clear();
     
+    // properties
     const std::vector<value> & weights() const;
     const std::vector<std::unique_ptr<Component>> & components() const;
         
-    // setters/getters
     value sum_of_weights() const;
     value sum_of_nsamples() const;
     value threshold() const;
@@ -37,6 +31,7 @@ public:
     
     void set_threshold( value v );
     
+    // methods
     void add_samples( const value * samples, unsigned int n, value w=1., value attenuation=1. );
     void merge_samples( const value * samples, unsigned int n, bool random = true, value w=1., value attenuation=1. );
     
@@ -62,6 +57,26 @@ public:
     //}
     //void marginal( const Grid * grid, const std::vector<bool> & selection, value * result ) const;
     
+    // yaml
+    YAML::Node to_yaml() const;
+    
+    void save_to_yaml( std::ostream & stream ) const;
+    void save_to_yaml( std::string path ) const;
+    
+    static std::unique_ptr<Mixture> from_yaml( const YAML::Node & node );
+    static std::unique_ptr<Mixture> load_from_yaml( std::string path );
+    
+    // hdf5
+    void to_hdf5(HighFive::Group & group) const;
+    
+    void save_to_hdf5(std::string filename,
+        int flags = HighFive::File::ReadWrite | HighFive::File::Create | HighFive::File::Truncate,
+        std::string path = "");
+    
+    static std::unique_ptr<Mixture> from_hdf5(const HighFive::Group & group);
+    static std::unique_ptr<Mixture> load_from_hdf5(std::string filename, 
+        std::string path="");
+    
 protected:
     value update_weights_( unsigned int nsamples );
     value update_weights_( unsigned int nsamples, value weight, value attenuation );
@@ -80,15 +95,14 @@ protected:
     std::vector<value> weights_;
 };
 
-Mixture * mixture_from_YAML( const YAML::Node & node );
-
-Mixture * load_mixture( std::string path );
 
 class PartialMixture {
 public:
+    // constructors
     PartialMixture( const Mixture * source, const std::vector<bool> & selection, const value * points, unsigned int n );
     PartialMixture( const Mixture * source, Grid & grid );
     
+    // properties
     const Mixture & mixture() const;
     
     unsigned int ncomponents() const;
@@ -98,6 +112,9 @@ public:
     
     const std::vector<long unsigned int> & partial_shape() const;
     
+    const std::vector<value> & partial_logp() const;
+    
+    // methods
     void complete ( const value * points, unsigned int n, value * result ) const;
     void complete_multi ( const value * points, unsigned int n, value * result) const; //, value * offset = nullptr ) const;
         
@@ -116,9 +133,9 @@ public:
         
     }
     
-    const std::vector<value> & partial_logp() const;
-    
+    // space
     const Space & space() const { return mixture_.space(); }
+
     //Space & partialspace() const { return mixture_.template_component()->dataspace_selection(selection_.cbegin()); }
     //Space & inversespace() const { return mixture_.template_component()->dataspace_selection(inverted_selection_.cbegin()); }
     

@@ -12,7 +12,7 @@ void pybind_kernel(py::module &m) {
     )pbdoc")
     .def("to_yaml", [](Kernel &k)->std::string {
         YAML::Emitter out;
-        YAML::Node node = k.toYAML();
+        YAML::Node node = k.to_yaml();
         out << YAML::Flow;
         out << node;
         std::string s = out.c_str();
@@ -28,7 +28,7 @@ void pybind_kernel(py::module &m) {
         
     .def_static("from_yaml", [](std::string s) {
         YAML::Node node = YAML::Load( s );
-        return std::unique_ptr<Kernel>( kernel_from_YAML( node ) ); },
+        return std::unique_ptr<Kernel>( kernel_from_yaml( node ) ); },
     py::arg("string"),
     R"pbdoc(
         Construct kernel definition from YAML

@@ -1,11 +1,15 @@
 #include "space_encoded.hpp"
 
-EncodedSpace::EncodedSpace( std::string name, std::vector<value> & lut, value bandwidth, unsigned int index ) :
-EncodedSpace::EncodedSpace(name, lut, GaussianKernel(), bandwidth, index) {}
+// constructors
+EncodedSpace::EncodedSpace( std::string name, std::vector<value> & lut,
+    value bandwidth, unsigned int index )
+    : EncodedSpace::EncodedSpace(name, lut, GaussianKernel(), bandwidth, index) {}
 
-EncodedSpace::EncodedSpace( std::string name, std::vector<value> & lut, const Kernel & k, value bandwidth, unsigned int index) :
-SpaceBase<EncodedSpace>( "euclidean", make_spec( name, lut, k), make_kernel( bandwidth, index, k ) ), 
-lut_( new std::vector<value>(lut) ), kernel_(k.clone()) {
+EncodedSpace::EncodedSpace( std::string name, std::vector<value> & lut, 
+    const Kernel & k, value bandwidth, unsigned int index)
+    : SpaceBase<EncodedSpace>( "encoded", make_spec( name, lut, k),
+        make_kernel( bandwidth, index, k ) ), 
+      lut_( new std::vector<value>(lut) ), kernel_(k.clone()) {
     nlut_ = static_cast<unsigned int>( std::sqrt( lut_->size() ) );
     if (nlut_*nlut_ != lut_->size()) {
         throw std::runtime_error("Squared distance look-up table needs to be a square matrix.");
@@ -15,15 +19,18 @@ lut_( new std::vector<value>(lut) ), kernel_(k.clone()) {
     }
 }
 
-SpaceSpecification EncodedSpace::make_spec( std::string name, std::vector<value> & lut, const Kernel & ktype ) {
+SpaceSpecification EncodedSpace::make_spec( std::string name, std::vector<value> & lut, 
+    const Kernel & ktype ) {
     
     std::string extra = "kernel=" + ktype.to_string();
-    extra += ", N=" + std::to_string( std::sqrt( lut.size() ) );
+    extra += ", N=" + std::to_string( (unsigned int) std::sqrt( lut.size() ) );
     
     return SpaceSpecification( DimSpecification(name, "encoded", extra) );
 }
 
-Component EncodedSpace::make_kernel(value bw, unsigned int loc, const Kernel & ktype) const {
+Component EncodedSpace::make_kernel(value bw, unsigned int loc, 
+    const Kernel & ktype) const {
+    
     Component k;
     
     k.location = { static_cast<value>(loc) };
@@ -35,49 +42,34 @@ Component EncodedSpace::make_kernel(value bw, unsigned int loc, const Kernel & k
     return k;
 }
 
-EncodedSpace * EncodedSpace::fromYAML( const YAML::Node & node ) {
+// grid construction
+Grid * EncodedSpace::grid(unsigned int delta) const {
     
-    if (!node["name"] || !node["lut"]) {
-        throw std::runtime_error("Ill-formed encoded space definition.");
+    unsigned int n = (nlut_-1)/delta + 1;
+    std::vector<value> v( n );
+    
+    for (unsigned int k=0; k<n; ++k) {
+        v[k] = delta * k;
     }
     
-    std::string name = node["names"].as<std::string>();
-    
-    std::unique_ptr<Kernel> k;
-    
-    if (node["kernel"]) {
-        k.reset( kernel_from_YAML( node["kernel"] ) );
-    } else {
-        k.reset( new GaussianKernel() );
-    }
-    
-    std::vector<value> lut = node["lut"].as<std::vector<value>>();
-    
-    EncodedSpace * p = new EncodedSpace( name, lut, *k );
-
-    return p;
+    return new VectorGrid( { v }, specification(), {} );
 }
 
-YAML::Node EncodedSpace::asYAML() const {
-    YAML::Node node;
-    node["name"] = specification().dim(0).name();;
-    node["kernel"] = kernel_->toYAML();
-    node["lut"] = *lut_;
-    return node;
-}
-
+// methods
 value EncodedSpace::compute_scale_factor( value * bw, bool log) const {
     
     return kernel_->scale_factor( 1, bw, log );
 }
 
-value EncodedSpace::compute_scale_factor( std::vector<bool>::const_iterator selection, value * bw, bool log) const {
+value EncodedSpace::compute_scale_factor( std::vector<bool>::const_iterator selection, 
+    value * bw, bool log) const {
     
     return kernel_->scale_factor( 1, bw, log, selection );
 }
 
 
-value EncodedSpace::mahalanobis_distance_squared( const value * refloc, const value * refbw, const value * targetloc, value threshold) const {
+value EncodedSpace::mahalanobis_distance_squared( const value * refloc, 
+    const value * refbw, const value * targetloc, value threshold) const {
     
     unsigned int index1 = static_cast<unsigned int>(*refloc);
     unsigned int index2 = static_cast<unsigned int>(*targetloc);
@@ -87,7 +79,8 @@ value EncodedSpace::mahalanobis_distance_squared( const value * refloc, const va
     return (*lut_)[index1 + nlut_*index2] / (*refbw * *refbw);
 }
 
-void EncodedSpace::merge( value w1, value * loc1, value * bw1, value w2, const value * loc2, const value * bw2 ) const {
+void EncodedSpace::merge( value w1, value * loc1, value * bw1, value w2, 
+    const value * loc2, const value * bw2 ) const {
     
     // find lut entry k that minimizes w1*lut[index1,k] + w2*lut[index2,k]
 
@@ -107,10 +100,13 @@ void EncodedSpace::merge( value w1, value * loc1, value * bw1, value w2, const v
     
     value w = w1+w2;
     
-    *bw1 = std::sqrt( w1*(*bw1 * *bw1)/w + w2*(*bw2 * *bw2)/w + w1*w2*(*lut_)[static_cast<unsigned int>(*loc1)+static_cast<unsigned int>(*loc2)*nlut_]/(w*w) );
+    *bw1 = std::sqrt(w1*(*bw1 * *bw1)/w + w2*(*bw2 * *bw2)/w + 
+                    w1*w2*(*lut_)[static_cast<unsigned int>(*loc1)+
+                                  static_cast<unsigned int>(*loc2)*nlut_]/(w*w));
 }
 
-value EncodedSpace::probability( const value * loc, const value * bw, const value * point ) const {
+value EncodedSpace::probability( const value * loc, const value * bw, 
+    const value * point ) const {
     
     unsigned int idx = static_cast<unsigned int>( *point );
     
@@ -121,13 +117,15 @@ value EncodedSpace::probability( const value * loc, const value * bw, const valu
     return kernel_->probability( d );
 }
 
-void EncodedSpace::probability( const value * loc, const value * bw, const value * points, unsigned int n, value * result ) const {
+void EncodedSpace::probability( const value * loc, const value * bw, 
+    const value * points, unsigned int n, value * result ) const {
     for (unsigned int k=0; k<n; ++k) {
         *result++ = probability( loc, bw, points++ );
     }
 }
 
-value EncodedSpace::log_probability( const value * loc, const value * bw, const value * point ) const {
+value EncodedSpace::log_probability( const value * loc, const value * bw, 
+    const value * point ) const {
     
     unsigned int idx = static_cast<unsigned int>( *point );
     
@@ -138,13 +136,15 @@ value EncodedSpace::log_probability( const value * loc, const value * bw, const 
     return kernel_->log_probability( d );
 }
 
-void EncodedSpace::log_probability( const value * loc, const value * bw, const value * points, unsigned int n, value * result ) const {
+void EncodedSpace::log_probability( const value * loc, const value * bw, 
+    const value * points, unsigned int n, value * result ) const {
     for (unsigned int k=0; k<n; ++k) {
         *result++ = log_probability( loc, bw, points++ );
     }
 }
 
-value EncodedSpace::partial_logp( const value * loc, const value * bw, const value * point, std::vector<bool>::const_iterator selection ) const {
+value EncodedSpace::partial_logp( const value * loc, const value * bw, 
+    const value * point, std::vector<bool>::const_iterator selection ) const {
     
     value p=0.;
     
@@ -165,14 +165,64 @@ value EncodedSpace::partial_logp( const value * loc, const value * bw, const val
 }
 
 
-Grid * EncodedSpace::grid(unsigned int delta) const {
+// yaml
+std::unique_ptr<EncodedSpace> EncodedSpace::from_yaml( const YAML::Node & node ) {
     
-    unsigned int n = (nlut_-1)/delta + 1;
-    std::vector<value> v( n );
-    
-    for (unsigned int k=0; k<n; ++k) {
-        v[k] = delta * k;
+    if (!node["name"] || !node["lut"]) {
+        throw std::runtime_error("Ill-formed encoded space definition.");
     }
     
-    return new VectorGrid( { v }, specification(), {} );
+    std::string name = node["names"].as<std::string>();
+    
+    std::unique_ptr<Kernel> k;
+    
+    if (node["kernel"]) {
+        k = kernel_from_yaml( node["kernel"] );
+    } else {
+        k.reset( new GaussianKernel() );
+    }
+    
+    std::vector<value> lut = node["lut"].as<std::vector<value>>();
+    
+    return std::make_unique<EncodedSpace>(name, lut, *k);
+}
+
+YAML::Node EncodedSpace::to_yaml_impl() const {
+    YAML::Node node;
+    node["name"] = specification().dim(0).name();;
+    node["kernel"] = kernel_->to_yaml();
+    node["lut"] = *lut_;
+    return node;
+}
+
+
+// hdf5
+void EncodedSpace::to_hdf5_impl(HighFive::Group & group) const {
+    std::string name = specification().dim(0).name();
+    
+    HighFive::DataSet ds_name = group.createDataSet<std::string>(
+        "name", HighFive::DataSpace::From(name));
+    ds_name.write(name);
+    
+    HighFive::Group kernel = group.createGroup("kernel");
+    kernel_->to_hdf5(kernel);
+    
+    HighFive::DataSet ds_lut = group.createDataSet<value>(
+        "lut", HighFive::DataSpace::From(*lut_));
+    ds_lut.write(*lut_);
+}
+
+std::unique_ptr<EncodedSpace> EncodedSpace::from_hdf5(const HighFive::Group & group) {
+    std::string name;
+    
+    HighFive::DataSet ds_name = group.getDataSet("name");
+    ds_name.read(name);
+    
+    std::vector<value> lut;
+    HighFive::DataSet ds_lut = group.getDataSet("lut");
+    ds_lut.read(lut);
+    
+    std::unique_ptr<Kernel> k = kernel_from_hdf5(group.getGroup("kernel"));
+    
+    return std::make_unique<EncodedSpace>(name, lut, *k);
 }

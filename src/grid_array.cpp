@@ -22,8 +22,13 @@ std::vector<long unsigned int> shape_from_array_args( const std::vector<long uns
     return s;
 }
 
-ArrayGrid::ArrayGrid( const std::vector<value> & array, const SpaceSpecification & space, const std::vector<bool> & valid, std::vector<long unsigned int> shape ) :
-GridBase<ArrayGrid>( "array", space, shape_from_array_args( shape, array.size(), space.ndim() ), valid ), array_(array) {
+// constructor
+ArrayGrid::ArrayGrid( const std::vector<value> & array,
+    const SpaceSpecification & space, const std::vector<bool> & valid,
+    std::vector<long unsigned int> shape )
+    : GridBase<ArrayGrid>( "array", space,
+        shape_from_array_args(shape, array.size(), space.ndim()), valid),
+        array_(array) {
     
     if (this->valid().size()>0 && array_.size()!=ndim()*nvalid()) {
         throw std::runtime_error("Incorrect number of points in array.");
@@ -31,45 +36,42 @@ GridBase<ArrayGrid>( "array", space, shape_from_array_args( shape, array.size(),
     
     unsigned int npoints = array_.size() / ndim();
     
-    if ( (this->valid().size()==0 && npoints!=size()) || (this->valid().size()>0 && npoints!=nvalid())) {
-        throw std::runtime_error("Number of points in array incompatible with validity vector.");
+    if ( (this->valid().size()==0 && npoints!=size()) || 
+         (this->valid().size()>0 && npoints!=nvalid())) {
+        throw std::runtime_error("Number of points in array incompatible "
+            "with validity vector.");
     }
     
 }
 
-YAML::Node ArrayGrid::asYAML() const {
-    YAML::Node node;
-    node["array"] = array_;
-    return node;
-}
 
-Grid * ArrayGrid::fromYAML( const YAML::Node & node, const SpaceSpecification & space, const std::vector<bool> & valid, std::vector<long unsigned int> shape ) {
-    std::vector<value> a = node["array"].as<std::vector<value>>();
-    return new ArrayGrid( a, space, valid, shape );
-}
-
-void ArrayGrid::probability( const CategoricalSpace & space, value weight, const value * loc, const value * bw, value * result )  {
+// methods to compute probability
+void ArrayGrid::probability( const CategoricalSpace & space, value weight, 
+    const value * loc, const value * bw, value * result )  {
     // ignore valid vector for categorical variables
     value * ptr = array_.data();
     for (unsigned int n=0; n<array_.size(); ++n) {
         *result++ += weight*space.probability( loc, bw, ptr++ );
     }
 }
-void ArrayGrid::probability( const CircularSpace & space, value weight, const value * loc, const value * bw, value * result )  {
+void ArrayGrid::probability( const CircularSpace & space, value weight,
+    const value * loc, const value * bw, value * result )  {
     // ignore valid vector for circular variables
     value * ptr = array_.data();
     for (unsigned int n=0; n<array_.size(); ++n) {
         *result++ += weight*space.probability( loc, bw, ptr++ );
     }
 }
-void ArrayGrid::probability( const EncodedSpace & space, value weight, const value * loc, const value * bw, value * result )  {
+void ArrayGrid::probability( const EncodedSpace & space, value weight,
+    const value * loc, const value * bw, value * result )  {
     // ignore valid vector for encoded variables
     value * ptr = array_.data();
     for (unsigned int n=0; n<array_.size(); ++n) {
         *result++ += weight*space.probability( loc, bw, ptr++ );
     }
 }
-void ArrayGrid::probability( const EuclideanSpace & space, value weight, const value * loc, const value * bw, value * result )  {
+void ArrayGrid::probability( const EuclideanSpace & space, value weight, 
+    const value * loc, const value * bw, value * result )  {
     value * ptr = array_.data();
     
     if (nvalid()>0) {
@@ -91,7 +93,10 @@ void ArrayGrid::probability( const EuclideanSpace & space, value weight, const v
 
 }
 
-void ArrayGrid::partial_logp( const CategoricalSpace & space, std::vector<bool>::const_iterator selection, value factor, const value * loc, const value * bw, value * result ) {
+// methods to compute partial log probability
+void ArrayGrid::partial_logp( const CategoricalSpace & space, 
+    std::vector<bool>::const_iterator selection, value factor, const value * loc, 
+    const value * bw, value * result ) {
     if (*selection) {
         for (auto & k : array_) {
             if (static_cast<unsigned int>(*loc)!=static_cast<unsigned int>(k)) {
@@ -102,7 +107,9 @@ void ArrayGrid::partial_logp( const CategoricalSpace & space, std::vector<bool>:
         }
     }
 }
-void ArrayGrid::partial_logp( const CircularSpace & space, std::vector<bool>::const_iterator selection, value factor, const value * loc, const value * bw, value * result ) {
+void ArrayGrid::partial_logp( const CircularSpace & space, 
+    std::vector<bool>::const_iterator selection, value factor, const value * loc, 
+    const value * bw, value * result ) {
     
     value * ptr = array_.data();
     for (unsigned int k=0; k<array_.size(); ++k) {
@@ -111,14 +118,18 @@ void ArrayGrid::partial_logp( const CircularSpace & space, std::vector<bool>::co
     
     // alternative: first test for selection, then compute log probability
 }
-void ArrayGrid::partial_logp( const EncodedSpace & space, std::vector<bool>::const_iterator selection, value factor, const value * loc, const value * bw, value * result ) {
+void ArrayGrid::partial_logp( const EncodedSpace & space, 
+    std::vector<bool>::const_iterator selection, value factor, const value * loc, 
+    const value * bw, value * result ) {
     
     value * ptr = array_.data();
     for (unsigned int k=0; k<array_.size(); ++k) {
         *result++ = factor + space.partial_logp( loc, bw, ptr++, selection );
     }
 }
-void ArrayGrid::partial_logp( const EuclideanSpace & space, std::vector<bool>::const_iterator selection, value factor, const value * loc, const value * bw, value * result ) {
+void ArrayGrid::partial_logp( const EuclideanSpace & space, 
+    std::vector<bool>::const_iterator selection, value factor, const value * loc, 
+    const value * bw, value * result ) {
     
     // for each point in grid array
     // compute partial_logp + factor and assign to result
@@ -131,7 +142,10 @@ void ArrayGrid::partial_logp( const EuclideanSpace & space, std::vector<bool>::c
     }
     
 }
-void ArrayGrid::partial_logp( const MultiSpace & space, std::vector<bool>::const_iterator selection, value factor, const value * loc, const value * bw, value * result ) {
+void ArrayGrid::partial_logp( const MultiSpace & space, 
+    std::vector<bool>::const_iterator selection, value factor, const value * loc, 
+    const value * bw, value * result ) {
+    
     // search for child space that has same specification
     unsigned int index;
     for (index=0; index<space.nchildren(); ++index) {
@@ -149,3 +163,40 @@ void ArrayGrid::partial_logp( const MultiSpace & space, std::vector<bool>::const
     
 }
 
+// yaml
+YAML::Node ArrayGrid::to_yaml_impl() const {
+    YAML::Node node;
+    node["array"] = array_;
+    return node;
+}
+
+std::unique_ptr<Grid> ArrayGrid::from_yaml(const YAML::Node & node, 
+    const SpaceSpecification & space, const std::vector<bool> & valid,
+    std::vector<long unsigned int> shape ) {
+    
+    std::vector<value> a = node["array"].as<std::vector<value>>();
+    return std::make_unique<ArrayGrid>( a, space, valid, shape );
+}
+
+
+// hdf5
+void ArrayGrid::to_hdf5_impl(HighFive::Group & group) const {
+    
+    HighFive::DataSet dataset = group.createDataSet<value>(
+        "array", HighFive::DataSpace::From(array_));
+    
+    dataset.write(array_);
+    
+}
+
+std::unique_ptr<Grid> ArrayGrid::from_hdf5(const HighFive::Group & group, 
+    const SpaceSpecification & space, const std::vector<bool> & valid, 
+    std::vector<long unsigned int> shape ) {
+    
+    std::vector<value> a;
+    HighFive::DataSet dataset = group.getDataSet("array");
+    dataset.read(a);
+    
+    return std::make_unique<ArrayGrid>( a, space, valid, shape );
+}
+  

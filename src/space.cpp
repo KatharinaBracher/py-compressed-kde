@@ -1,39 +1,61 @@
 #include "space.hpp"
 #include <fstream>
 
-Space * space_from_YAML( const YAML::Node & node ) {
+
+// yaml
+std::unique_ptr<Space> space_from_YAML( const YAML::Node & node ) {
     
     if (!node.IsMap() || !node["class"] ) {
         throw std::runtime_error("Not a valid YAML description of space.");
     }
     
-    Space * k = nullptr;
-    
     std::string klass = node["class"].as<std::string>( "unknown" );
     
     if (klass=="multi") {
-        k = MultiSpace::fromYAML( node["space"] );
+        return MultiSpace::from_yaml( node["space"] );
     } else if (klass=="euclidean") {
-        k = EuclideanSpace::fromYAML( node["space"] );
+        return EuclideanSpace::from_yaml( node["space"] );
     } else if (klass=="categorical") {
-        k = CategoricalSpace::fromYAML( node["space"] );
+        return CategoricalSpace::from_yaml( node["space"] );
     } else if (klass=="circular") {
-        k = CircularSpace::fromYAML( node["space"] );
+        return CircularSpace::from_yaml( node["space"] );
+    } else if (klass=="encoded") {
+        return EncodedSpace::from_yaml( node["space"] );
     } else {
         throw std::runtime_error("Unknown space.");
     }
     
-    return k;
-    
 }
 
 
-Space * load_space( std::string path ) {
+std::unique_ptr<Space> load_space_from_yaml( std::string path ) {
     
     std::ifstream ifs(path, std::ifstream::in);
     
     auto node = YAML::Load( ifs );
     
-    return space_from_YAML( node );
+    return space_from_yaml( node );
     
+}
+
+// hdf5
+std::unique_ptr<Space> space_from_hdf5(const HighFive::Group & group) {
+    
+    std::string klass;
+    HighFive::Attribute attr_klass = group.getAttribute("class");
+    attr_klass.read(klass);
+    
+    if (klass=="multi") {
+        return MultiSpace::from_hdf5( group.getGroup("space") );
+    } else if (klass=="euclidean") {
+        return EuclideanSpace::from_hdf5( group.getGroup("space") );
+    } else if (klass=="categorical") {
+        return CategoricalSpace::from_hdf5( group.getGroup("space") );
+    } else if (klass=="circular") {
+        return CircularSpace::from_hdf5( group.getGroup("space") );
+    } else if (klass=="encoded") {
+        return EncodedSpace::from_hdf5( group.getGroup("space") );
+    } else {
+        throw std::runtime_error("Unknown space.");
+    }
 }

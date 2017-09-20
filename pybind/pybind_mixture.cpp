@@ -117,7 +117,9 @@ void pybind_mixture(py::module &m) {
     R"pbdoc(Scale factors of all components.)pbdoc")
     .def("clear", &Mixture::clear, R"pbdoc(Remove all components and reset mixture.)pbdoc")
     
-    .def("save", [](const Mixture& obj, std::string path) { obj.save( path ); }, py::arg("path"),
+    .def("save_to_hdf5", &Mixture::save_to_hdf5)
+    
+    .def("saveto_yaml", [](const Mixture& obj, std::string path) { obj.save_to_yaml( path ); }, py::arg("path"),
     R"pbdoc(
         Save mixture to YAML file.
         
@@ -130,7 +132,7 @@ void pybind_mixture(py::module &m) {
     
     .def("to_yaml", [](Mixture &m)->std::string {
         YAML::Emitter out;
-        YAML::Node node = m.toYAML();
+        YAML::Node node = m.to_yaml();
         out << YAML::Flow;
         out << node;
         std::string s = out.c_str();
@@ -147,7 +149,7 @@ void pybind_mixture(py::module &m) {
     
     .def_static("from_yaml", [](std::string s)->std::unique_ptr<Mixture> {
         YAML::Node node = YAML::Load( s );
-        return std::unique_ptr<Mixture>(mixture_from_YAML( node ));
+        return Mixture::from_yaml( node );
     }, py::arg("string"),
     R"pbdoc(
         Create mixture from YAML.
@@ -163,7 +165,7 @@ void pybind_mixture(py::module &m) {
         
     )pbdoc")
     
-    .def_static("load", [](std::string path) { return std::unique_ptr<Mixture>( load_mixture(path) ); },
+    .def_static("load_from_yaml", [](std::string path) { return std::unique_ptr<Mixture>( Mixture::load_from_yaml(path) ); },
     py::arg("path"),
     R"pbdoc(
         Load mixture from file.
@@ -172,6 +174,22 @@ void pybind_mixture(py::module &m) {
         ----------
         path : string
             path to YAML file
+        
+        Returns
+        -------
+        Mixture
+        
+    )pbdoc" )
+    
+    .def_static("load_from_hdf5", [](std::string path) { return std::unique_ptr<Mixture>( Mixture::load_from_hdf5(path) ); },
+    py::arg("path"),
+    R"pbdoc(
+        Load mixture from hdf5 file.
+        
+        Parameters
+        ----------
+        path : string
+            path to hdf5 file
         
         Returns
         -------

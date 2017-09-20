@@ -17,13 +17,20 @@ std::vector<long unsigned int> shape_from_grids( const std::vector<Grid*> & grid
     return shape;
 }
 
-MultiGrid::MultiGrid( const std::vector<Grid*> & grids, const std::vector<bool> & valid ) :
-GridBase<MultiGrid>( "multi", space_from_grids( grids ), shape_from_grids( grids ), valid ) {
+// constructor
+MultiGrid::MultiGrid( const std::vector<Grid*> & grids, const std::vector<bool> & valid )
+    : GridBase<MultiGrid>( "multi", space_from_grids( grids ), 
+        shape_from_grids( grids ), valid ) {
+    
     for (auto & k : grids) {
         if (k->klass()=="multi") {
             // merge
             auto other = dynamic_cast<MultiGrid*>(k);
-            if (other==nullptr) { throw std::runtime_error("Internal error: cannot cast to MultiGrid"); }
+            
+            if (other==nullptr) {
+                throw std::runtime_error("Internal error: cannot cast to MultiGrid");
+            }
+            
             for (unsigned int c=0; c<other->ngrids(); ++c) {
                 grids_.emplace_back( other->subgrid(c).clone() );
             }
@@ -33,17 +40,19 @@ GridBase<MultiGrid>( "multi", space_from_grids( grids ), shape_from_grids( grids
     }
 }
 
-MultiGrid::MultiGrid( const MultiGrid & other ) :
-GridBase<MultiGrid>( other ) {
+// copy constructor
+MultiGrid::MultiGrid( const MultiGrid & other )
+    : GridBase<MultiGrid>( other ) {
+    
     for (auto & k : other.grids_) {
         grids_.emplace_back( k->clone() );
     }
 }
 
+// properties
 unsigned int MultiGrid::ngrids() const {
     return grids_.size();
 }
-
 const Grid & MultiGrid::subgrid(unsigned int index) {
     if (index>=grids_.size()) {
         throw std::runtime_error("Invalid subgrid index.");
@@ -52,28 +61,7 @@ const Grid & MultiGrid::subgrid(unsigned int index) {
     return *grids_[index];
 }
 
-YAML::Node MultiGrid::asYAML() const {
-    YAML::Node node;
-    for (auto & k : grids_) {
-        node["grids"].push_back( k->toYAML() );
-    }
-    return node;
-}
-
-Grid * MultiGrid::fromYAML( const YAML::Node & node, const SpaceSpecification & space, const std::vector<bool> & valid ) {
-    std::vector<std::unique_ptr<Grid>> g;
-    for (auto & k : node["grids"]) {
-        g.emplace_back( grid_from_YAML( k ) );
-    }
-    std::vector<Grid*> ptr;
-    for (auto & k : g) {
-        ptr.push_back( k.get() );
-    }
-    
-    return new MultiGrid( ptr, valid );
-}
-
-    
+// method to compute probability
 void MultiGrid::probability( const MultiSpace & space, value weight, const value * loc, const value * bw, value * result ) {
     if (space.nchildren() != grids_.size()) {
         throw std::runtime_error("Invalid number of grids/spaces.");
@@ -99,6 +87,8 @@ void MultiGrid::probability( const MultiSpace & space, value weight, const value
     
 }
 
+
+// methods to compute partial log probability
 void MultiGrid::partial_logp( const CategoricalSpace & space, std::vector<bool>::const_iterator selection, value factor, const value * loc, const value * bw, value * result ) {
     // single grid with compatible space?
     if (grids_.size()!=1 || !(grids_[0]->specification()==space.specification())) {
@@ -135,7 +125,6 @@ void MultiGrid::partial_logp( const EuclideanSpace & space, std::vector<bool>::c
     grids_[0]->partial_logp( space, selection, factor, loc, bw, result );
     //space.partial_logp( *grids_[0], selection, factor, loc, bw, result );
 }
-
 void MultiGrid::partial_logp( const MultiSpace & space, std::vector<bool>::const_iterator selection, value factor, const value * loc, const value * bw, value * result ) {
 
     // loop through all matching subspaces
@@ -173,3 +162,70 @@ void MultiGrid::partial_logp( const MultiSpace & space, std::vector<bool>::const
         add_assign_vectors( tmp, size(), factor, result );
     }
 }
+
+
+// yaml
+YAML::Node MultiGrid::to_yaml_impl() const {
+    YAML::Node node;
+    for (auto & k : grids_) {
+        node["grids"].push_back( k->to_yaml() );
+    }
+    return node;
+}
+
+std::unique_ptr<Grid> MultiGrid::from_yaml( const YAML::Node & node, 
+    const SpaceSpecification & space, const std::vector<bool> & valid ) {
+    std::vector<std::unique_ptr<Grid>> g;
+    for (auto & k : node["grids"]) {
+        g.push_back(std::move(grid_from_yaml( k )));
+    }
+    std::vector<Grid*> ptr;
+    for (auto & k : g) {
+        ptr.push_back( k.get() );
+    }
+    
+    return std::make_unique<MultiGrid>( ptr, valid );
+}
+
+
+// hdf5
+void MultiGrid::to_hdf5_impl(HighFive::Group & group) const {
+    
+    unsigned int g = 0;
+    
+    HighFive::Attribute attr = group.createAttribute<unsigned int>(
+            "ndim", HighFive::DataSpace::From(g));
+    attr.write(grids_.size());
+    
+    for (auto & k : grids_) {
+        HighFive::Group subgroup = group.createGroup("grid" + std::to_string(g));
+        
+        k->to_hdf5(subgroup);
+        
+        ++g;
+    }
+}
+
+std::unique_ptr<Grid> MultiGrid::from_hdf5(const HighFive::Group & group, 
+    const SpaceSpecification & space, const std::vector<bool> & valid) {
+    
+    unsigned int ndim;
+    
+    HighFive::Attribute attr = group.getAttribute("ndim");
+    attr.read(ndim);
+    
+    std::vector<std::unique_ptr<Grid>> g;
+    for (unsigned int k=0; k<ndim; ++k) {
+        HighFive::Group subgroup = group.getGroup("grid" + std::to_string(k));
+        g.push_back(std::move(grid_from_hdf5(subgroup)));
+    }
+    
+    std::vector<Grid*> ptr;
+    for (auto & k : g) {
+        ptr.push_back( k.get() );
+    }
+    
+    return std::make_unique<MultiGrid>( ptr, valid );
+    
+}
+    

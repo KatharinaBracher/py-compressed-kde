@@ -60,7 +60,7 @@ void pybind_space(py::module &m) {
     
     .def("to_yaml", [](Space &k)->std::string {
         YAML::Emitter out;
-        YAML::Node node = k.toYAML();
+        YAML::Node node = k.to_yaml();
         out << YAML::Flow;
         out << node;
         std::string s = out.c_str();
@@ -74,7 +74,7 @@ void pybind_space(py::module &m) {
         
     )pbdoc" )
     
-    .def("save", [](const Space& obj, std::string path) { obj.save( path ); },
+    .def("save_to_yaml", [](const Space& obj, std::string path) { obj.save_to_yaml( path ); },
     py::arg("path"),
     R"pbdoc(
         Save space definition to YAML file.
@@ -86,7 +86,7 @@ void pybind_space(py::module &m) {
         
     )pbdoc" )
     
-    .def_static("load", [](std::string path) { return std::unique_ptr<Space>( load_space(path) ); }, py::arg("path"),
+    .def_static("load_from_yaml", [](std::string path) { return std::unique_ptr<Space>( load_space_from_yaml(path) ); }, py::arg("path"),
     R"pbdoc(
         Load space definition from file.
         
@@ -103,7 +103,7 @@ void pybind_space(py::module &m) {
     
     .def_static("from_yaml", [](std::string s) {
         YAML::Node node = YAML::Load( s );
-        return std::unique_ptr<Space>( space_from_YAML( node ) );
+        return std::unique_ptr<Space>( space_from_yaml( node ) );
     }, py::arg("string"),
     R"pbdoc(
         Construct space definition from YAML

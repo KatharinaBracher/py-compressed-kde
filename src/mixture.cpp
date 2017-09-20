@@ -5,11 +5,13 @@
 
 #include <iostream>
 
+// constructor
 Mixture::Mixture( const Space & space, value threshold ) :
 sum_of_weights_(0), sum_of_nsamples_(0),
 threshold_(threshold), threshold_squared_(threshold*threshold),
 space_(space.clone()) {}
 
+// copy constructor
 Mixture::Mixture( const Mixture& other ) :
 sum_of_weights_(other.sum_of_weights_), sum_of_nsamples_(other.sum_of_nsamples_),
 threshold_(other.threshold_), threshold_squared_(other.threshold_squared_), 
@@ -26,7 +28,7 @@ void Mixture::clear() {
     weights_.clear();
 }
 
-// setters/getters
+// properties
 value Mixture::sum_of_weights() const { return sum_of_weights_; }
 value Mixture::sum_of_nsamples() const { return sum_of_nsamples_; }
 value Mixture::threshold() const { return threshold_; }
@@ -40,7 +42,6 @@ const std::vector<std::unique_ptr<Component>> & Mixture::components() const {
     return kernels_;
 }
 
-
 void Mixture::set_threshold( value v )  {
     if (v<0.) {
         throw std::runtime_error("Threshold should be larger than or equal to 0.");
@@ -50,6 +51,7 @@ void Mixture::set_threshold( value v )  {
     threshold_squared_=threshold_*threshold_;
 }
 
+// methods
 void Mixture::add_samples( const value * samples, unsigned int n, value w, value attenuation ) {
     
     for (unsigned int k=0; k<n; ++k) {
@@ -219,7 +221,6 @@ PartialMixture* Mixture::partial( Grid & grid ) const {
     return new PartialMixture(this, grid);
 }
 
-
 void Mixture::marginal( const value * points, unsigned int n, const std::vector<bool> & selection, value * result ) const {
     
     if (selection.size()!=space_->ndim()) {
@@ -280,7 +281,7 @@ void Mixture::marginal( Grid & grid, value * result ) const {
     }
 }
 
-// WEIGHT UPDATING
+// protected methods
 value Mixture::update_weights_( unsigned int nsamples ) {
     
     sum_of_weights_ += nsamples;
@@ -323,7 +324,6 @@ value Mixture::update_weights_( unsigned int nsamples, value weight, value atten
     
 }
 
-
 bool Mixture::closest( const Component & target, unsigned int & index, value threshold_squared) const {
     
     value min_distance = threshold_squared;
@@ -345,19 +345,21 @@ bool Mixture::closest( const Component & k, unsigned int & index ) const {
     return closest( k, index, threshold_squared_ );
 }
 
-YAML::Node Mixture::toYAML() const {
+
+// yaml
+YAML::Node Mixture::to_yaml() const {
     YAML::Node node;
     
     node["sum_of_weights"] = sum_of_weights_;
     node["sum_of_nsamples"] = sum_of_nsamples_;
     node["threshold"] = threshold_;
     node["nkernels"] = kernels_.size();
-    node["space"] = space_->toYAML();
+    node["space"] = space_->to_yaml();
     
     node["kernels"] = YAML::Load("[]");
     
     for (auto & k : kernels_) {
-        node["kernels"].push_back( k->toYAML() );
+        node["kernels"].push_back( k->to_yaml() );
     }
     node["weights"] = weights_;
     
@@ -365,16 +367,30 @@ YAML::Node Mixture::toYAML() const {
     
 }
 
-Mixture * mixture_from_YAML( const YAML::Node & node ) {
+void Mixture::save_to_yaml( std::ostream & stream ) const {
+    auto node = to_yaml(); 
+    YAML::Emitter out; 
+    out << YAML::Flow; 
+    out << node; 
+    stream << out.c_str();
+}
+void Mixture::save_to_yaml( std::string path ) const {
+    std::ofstream fout(path);
+    save_to_yaml(fout);
+}
+
+std::unique_ptr<Mixture> Mixture::from_yaml( const YAML::Node & node ) {
     
-    if (!node["space"] || !node["weights"].IsSequence() || !node["kernels"].IsSequence() || node["weights"].size()!=node["kernels"].size()) {
+    if (!node["space"] || !node["weights"].IsSequence() || 
+        !node["kernels"].IsSequence() || 
+         node["weights"].size()!=node["kernels"].size()) {
         throw std::runtime_error( "Cannot retrieve weights or kernels.");
     }
     
-    auto space = std::unique_ptr<Space>( space_from_YAML( node["space"] ) );
+    auto space = space_from_yaml( node["space"] );
     value threshold = node["threshold"].as<value>( THRESHOLD );
     
-    auto m = std::unique_ptr<Mixture>( new Mixture( *space, threshold ) );
+    auto m = std::make_unique<Mixture>(*space, threshold);
     
     unsigned int nkernels = node["kernels"].size();
     
@@ -385,43 +401,143 @@ Mixture * mixture_from_YAML( const YAML::Node & node ) {
     
     for (unsigned int k=0; k<nkernels; ++k){
         try {
-            m->kernels_.push_back( std::unique_ptr<Component>( Component::fromYAML( node["kernels"][k] ) ) );
+            m->kernels_.push_back(std::move(Component::from_yaml( node["kernels"][k])));
             
-            if (m->kernels_.back()->location.size()!=space->ndim() || m->kernels_.back()->bandwidth.size()!=space->nbw()) {
+            if (m->kernels_.back()->location.size()!=space->ndim() || 
+                m->kernels_.back()->bandwidth.size()!=space->nbw()) {
                 throw std::runtime_error("Component vector sizes do not match space.");
             }
             
             space->update_scale_factor( *m->kernels_.back() );
             
-            //m->kernels_.back()->update_fromYAML( node["kernels"][k] );
         } catch (std::exception & me) { // ToDo: catch proper exception
             throw std::runtime_error("Cannot load kernel data.");
         }
     }
     
-    return m.release();
+    return m;
 }
-
-Mixture * load_mixture( std::string path ) {
+std::unique_ptr<Mixture> Mixture::load_from_yaml( std::string path ) {
     std::ifstream ifs(path, std::ifstream::in);
     
     auto node = YAML::Load( ifs );
     
-    return mixture_from_YAML( node );
-}
-
-void Mixture::save( std::ostream & stream ) const {
-    auto node = toYAML(); 
-    YAML::Emitter out; 
-    out << YAML::Flow; 
-    out << node; 
-    stream << out.c_str();
-}
-void Mixture::save( std::string path ) const {
-    std::ofstream fout(path); save(fout);
+    return Mixture::from_yaml( node );
 }
 
 
+// hdf5
+void Mixture::to_hdf5(HighFive::Group & group) const {
+    
+    HighFive::DataSet ds_sow = group.createDataSet<value>("sum_of_weights", HighFive::DataSpace::From(sum_of_weights_));
+    ds_sow.write(sum_of_weights_);
+    
+    HighFive::DataSet ds_son = group.createDataSet<value>("sum_of_nsamples", HighFive::DataSpace::From(sum_of_nsamples_));
+    ds_son.write(sum_of_nsamples_);
+    
+    HighFive::DataSet ds_th = group.createDataSet<value>("threshold", HighFive::DataSpace::From(threshold_));
+    ds_th.write(threshold_);
+    
+    HighFive::DataSet ds_nk = group.createDataSet<unsigned int>("nkernels", HighFive::DataSpace::From(kernels_.size()));
+    ds_nk.write(kernels_.size());
+    
+    HighFive::Group space_group = group.createGroup("space");
+    space_->to_hdf5(space_group);
+    
+    HighFive::DataSet ds_w = group.createDataSet<value>("weights", HighFive::DataSpace::From(weights_));
+    ds_w.write(weights_);
+    
+    HighFive::Group subgroup = group.createGroup("kernels");
+    
+    HighFive::DataSet ds_loc = subgroup.createDataSet<value>("location",
+        HighFive::DataSpace({space_->ndim(),kernels_.size()}));
+    
+    HighFive::DataSet ds_bw = subgroup.createDataSet<value>("bandwidth",
+        HighFive::DataSpace({space_->nbw(), kernels_.size()}));
+    
+    unsigned int n = 0;
+    
+    for (auto & k : kernels_) {
+        
+        ds_loc.select({0,n},{space_->ndim(),1}).write(k->location);
+        ds_bw.select({0,n},{space_->nbw(),1}).write(k->bandwidth);
+        
+        ++n;
+    }
+    
+}
+
+void Mixture::save_to_hdf5( std::string filename, int flags, std::string path) {
+    
+    HighFive::File file(filename, flags);
+    
+    // to do: create attributes for version, etc.
+    
+    if (!path.empty()) {
+        HighFive::Group group = file.createGroup(path);
+        this->to_hdf5(group);
+    } else {
+        HighFive::Group group = file.getGroup("/");
+        this->to_hdf5(group);
+    }
+    
+    file.flush();
+}
+
+std::unique_ptr<Mixture> Mixture::load_from_hdf5(std::string filename, 
+    std::string path) {
+        
+    HighFive::File file(filename, HighFive::File::ReadOnly);
+    
+    if (!path.empty()) {
+        HighFive::Group group = file.getGroup(path);
+        return Mixture::from_hdf5(group);
+    } else {
+        HighFive::Group group = file.getGroup("/");
+        return Mixture::from_hdf5(group);
+    }
+}
+
+std::unique_ptr<Mixture> Mixture::from_hdf5(const HighFive::Group & group) {
+    
+    auto space = space_from_hdf5(group.getGroup("space"));
+    
+    value threshold;
+    group.getDataSet("threshold").read(threshold);
+    
+    auto m = std::make_unique<Mixture>(*space, threshold);
+    
+    unsigned int nkernels;
+    group.getDataSet("nkernels").read(nkernels);
+        
+    group.getDataSet("sum_of_weights").read(m->sum_of_weights_);
+    group.getDataSet("sum_of_nsamples").read(m->sum_of_nsamples_);
+    group.getDataSet("weights").read(m->weights_);
+    
+    HighFive::DataSet loc = group.getGroup("kernels").getDataSet("location");
+    HighFive::DataSet bw = group.getGroup("kernels").getDataSet("bandwidth");
+    
+    for (unsigned int k=0; k<nkernels; ++k){
+        try {
+            auto comp = std::make_unique<Component>();
+            loc.select({0,k},{space->ndim(),1}).read(comp->location);
+            bw.select({0,k},{space->nbw(),1}).read(comp->bandwidth);
+            
+            m->kernels_.push_back(std::move(comp));
+            
+            space->update_scale_factor( *m->kernels_.back() );
+            
+        } catch (std::exception & me) { // ToDo: catch proper exception
+            throw std::runtime_error("Cannot load kernel data.");
+        }
+    }
+    
+    return m;    
+}
+
+
+
+// constructors
 PartialMixture::PartialMixture( const Mixture * source, const std::vector<bool> & selection, const value * points, unsigned int n ) :
 mixture_(*source), nsamples_(n), selection_(selection), inverted_selection_(selection) {        
     
@@ -440,7 +556,7 @@ mixture_(*source), nsamples_(grid.size()), selection_(source->space().specificat
     partial_shape_ = grid.shape();
 }
 
-
+// properties
 const Mixture & PartialMixture::mixture() const {
     return mixture_;
 }
@@ -464,51 +580,12 @@ const std::vector<bool> & PartialMixture::inverse_selection() const {
 const std::vector<long unsigned int> & PartialMixture::partial_shape() const {
     return partial_shape_;
 }
-     
+   
 const std::vector<value> & PartialMixture::partial_logp() const {
     return partial_logp_;
 }
 
-
-//void PartialMixture::complete ( const value * points, unsigned int n, value * result ) const {
-    
-    //if (ncomponents() != mixture().ncomponents()) {
-        //throw std::runtime_error("Number of kernels in source mixture has changed.");
-    //}
-    
-    //value x=0;
-    //value scale = 0.;
-    //const value * ptr = points;
-    
-    //unsigned int ndim = std::count( inverted_selection_.begin(), inverted_selection_.end(), true );
-    
-    //for (unsigned int k=0; k<n; ++k) {
-        
-        //auto it = partial_logp_.cbegin();
-        //auto w = mixture_.weights().cbegin();
-        
-        //for (auto & c : mixture_.components()) {
-            
-            //scale = mixture_.space().compute_scale_factor( *c, inverted_selection_, true );
-            //x = mixture_.space().partial_logp( *c, ptr, inverted_selection_) + scale;
-            
-            //if (std::isinf(x)) { it+=nsamples_; ++w; continue; }
-            
-            //for (unsigned int s=0; s<nsamples_; ++s) {
-                //result[s] += (*w) * fastexp(*it + x);
-                //++it;
-            //}
-            
-            //++w;
-            
-        //}
-        
-        //ptr += ndim;
-        //result += nsamples_; // TODO: shouldn't this be += nsamples instead of += n ??
-    //}
-    
-//}
-
+// methods
 void PartialMixture::complete ( const value * points, unsigned int n, value * result ) const {
     
     if (ncomponents() != mixture().ncomponents()) {
@@ -606,3 +683,4 @@ void PartialMixture::complete_multi ( const value * points, unsigned int n, valu
     }
     
 }
+

@@ -5,9 +5,11 @@
 #include "grid_array.hpp"
 #include "grid_multi.hpp"
 
-Grid * grid_from_YAML( const YAML::Node & node );
+// yaml
+std::unique_ptr<Grid> grid_from_yaml( const YAML::Node & node );
 
-
+// hdf5
+std::unique_ptr<Grid> grid_from_hdf5( const HighFive::Group & group );
 
 
 

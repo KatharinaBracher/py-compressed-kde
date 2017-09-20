@@ -1,31 +1,65 @@
 #include "grid.hpp"
 #include "spacespec.hpp"
 
-
-Grid * grid_from_YAML( const YAML::Node & node ) {
+// yaml
+std::unique_ptr<Grid> grid_from_yaml( const YAML::Node & node ) {
     
     if (!node.IsMap() || !node["class"] || !node["space"]) {
         throw std::runtime_error("Not a valid YAML description of grid.");
     }
     
-    SpaceSpecification space = SpaceSpecification::fromYAML( node["space"] );
-    std::vector<bool> valid = node["valid"].as<std::vector<bool>>( std::vector<bool>({}) );
-    std::vector<long unsigned int> shape = node["shape"].as<std::vector<long unsigned int>>( std::vector<long unsigned int>({}) );
+    SpaceSpecification space = SpaceSpecification::from_yaml( node["space"] );
     
-    Grid* k = nullptr;
+    std::vector<bool> valid = node["valid"].as<std::vector<bool>>(
+        std::vector<bool>({}));
+        
+    std::vector<long unsigned int> shape =
+        node["shape"].as<std::vector<long unsigned int>>(
+            std::vector<long unsigned int>({}));
     
     std::string klass = node["class"].as<std::string>( "unknown" );
     
     if (klass=="multi") {
-        k = MultiGrid::fromYAML( node["grid"], space, valid );
+        return MultiGrid::from_yaml( node["grid"], space, valid );
     } else if (klass=="vector") {
-        k = VectorGrid::fromYAML( node["grid"], space, valid );
+        return VectorGrid::from_yaml( node["grid"], space, valid );
     } else if (klass=="array") {
-        k = ArrayGrid::fromYAML( node["grid"], space, valid, shape );
+        return ArrayGrid::from_yaml( node["grid"], space, valid, shape );
     } else {
         throw std::runtime_error("Unknown grid.");
     }
     
-    return k;
+}
+
+// hdf5
+std::unique_ptr<Grid> grid_from_hdf5( const HighFive::Group & group ) {
+    
+    std::string klass;
+    
+    HighFive::Attribute attr_klass = group.getAttribute("class");
+    attr_klass.read(klass);
+    
+    auto space = SpaceSpecification::from_hdf5(group.getGroup("space"));
+    
+    std::vector<unsigned char> tmp;
+    HighFive::DataSet ds_valid = group.getDataSet("valid");
+    ds_valid.read(tmp);
+    
+    std::vector<bool> valid(tmp.begin(), tmp.end());
+    
+    if (klass=="multi") {
+        return MultiGrid::from_hdf5( group.getGroup("grid"), space, valid );
+    } else if (klass=="vector") {
+        return VectorGrid::from_hdf5( group.getGroup("grid"), space, valid );
+    } else if (klass=="array") {
+        
+        std::vector<long unsigned int> shape;
+        HighFive::DataSet ds_shape = group.getDataSet("shape");
+        ds_shape.read(shape);
+        
+        return ArrayGrid::from_hdf5( group.getGroup("grid"), space, valid, shape );
+    } else {
+        throw std::runtime_error("Unknown grid.");
+    }
     
 }

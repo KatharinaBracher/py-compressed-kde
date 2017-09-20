@@ -5,8 +5,9 @@ void pybind_kernel( py::module & );
 void pybind_grid( py::module & );
 void pybind_space( py::module & );
 void pybind_mixture( py::module & );
+void pybind_stimulus( py::module & );
 void pybind_likelihood( py::module & );
-
+void pybind_decoder( py::module & );
 
 PYBIND11_PLUGIN(compressed_kde) {
 
@@ -44,7 +45,9 @@ PYBIND11_PLUGIN(compressed_kde) {
     pybind_grid(m);
     pybind_space(m);
     pybind_mixture(m);
+    pybind_stimulus(m);
     pybind_likelihood(m);
+    pybind_decoder(m);
     
     return m.ptr();
     

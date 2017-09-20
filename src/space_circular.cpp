@@ -1,8 +1,10 @@
 #include "space_circular.hpp"
 #include "kernel_vonmises.hpp"
 
-CircularSpace::CircularSpace( std::string name, value kappa, value mu ) :
-SpaceBase<CircularSpace>( "circular", make_spec(name), make_kernel(kappa, mu) ) {}
+// constructor
+CircularSpace::CircularSpace( std::string name, value kappa, value mu )
+    : SpaceBase<CircularSpace>( "circular", make_spec(name), 
+        make_kernel(kappa, mu) ) {}
 
 SpaceSpecification CircularSpace::make_spec( std::string name ) {
     
@@ -18,29 +20,26 @@ Component CircularSpace::make_kernel(value kappa, value mu) const {
     return k;
 }
 
-CircularSpace* CircularSpace::fromYAML( const YAML::Node & node ) {
+// grid construction
+Grid * CircularSpace::grid(unsigned int n) const {
     
-    if (!node["name"]) {
-        throw std::runtime_error("Ill-formed circular space definition.");
+    std::vector<value> v(n);
+    for (unsigned int k=0; k<n; ++k) {
+        v[k] = ( (2*M_PI*k) / n );
     }
     
-    CircularSpace * p = new CircularSpace( node["name"].as<std::string>() );
+    return new VectorGrid( { v }, specification(), {} );
     
-    return p;
-    
-} 
-
-YAML::Node CircularSpace::asYAML() const {
-    YAML::Node node;
-    node["name"] = specification().dim(0).name();
-    return node;
 }
 
+// methods
 value CircularSpace::compute_scale_factor( value * bw, bool log ) const {
     return vonmises_scale_factor( *bw, log );
 }
 
-value CircularSpace::compute_scale_factor( std::vector<bool>::const_iterator selection, value * bw, bool log ) const {
+value CircularSpace::compute_scale_factor(
+    std::vector<bool>::const_iterator selection, value * bw, bool log ) const {
+    
     value s;
     if (*selection) {
         s = vonmises_scale_factor( *bw, log );
@@ -51,8 +50,8 @@ value CircularSpace::compute_scale_factor( std::vector<bool>::const_iterator sel
     return s;
 }
 
-
-value CircularSpace::mahalanobis_distance_squared( const value * refloc, const value * refbw, const value * targetloc, value threshold) const {
+value CircularSpace::mahalanobis_distance_squared( const value * refloc, 
+    const value * refbw, const value * targetloc, value threshold) const {
     // for large kappa, the von mises distribution can be approximated
     // by a Gaussian distribution with variance = 1/kappa
     // we will use this approximation to compute an equivalent
@@ -67,7 +66,8 @@ value CircularSpace::mahalanobis_distance_squared( const value * refloc, const v
     return d;
 }
 
-void CircularSpace::merge( value w1, value * loc1, value * bw1, value w2, const value * loc2, const value * bw2 ) const {
+void CircularSpace::merge( value w1, value * loc1, value * bw1, value w2, 
+    const value * loc2, const value * bw2 ) const {
     
     // mean: G( mu1 + (w2/(w1+w2)) * F( mu2 - mu1 ) )
     // where G(x): x+2*PI if x<0
@@ -94,7 +94,8 @@ void CircularSpace::merge( value w1, value * loc1, value * bw1, value w2, const 
     
 }
 
-value CircularSpace::probability( const value * loc, const value * bw, const value * point ) const {
+value CircularSpace::probability( const value * loc, const value * bw, 
+    const value * point ) const {
     
     value p;
     if (*bw>KAPPA_GAUSS_APPROX) {
@@ -107,7 +108,8 @@ value CircularSpace::probability( const value * loc, const value * bw, const val
     
 }
 
-void CircularSpace::probability( const value * loc, const value * bw, const value * points, unsigned int n, value * result ) const {
+void CircularSpace::probability( const value * loc, const value * bw, 
+    const value * points, unsigned int n, value * result ) const {
     
     for (unsigned int k=0; k<n; ++k) {
         *result++ = probability( loc, bw, points++ );
@@ -115,7 +117,8 @@ void CircularSpace::probability( const value * loc, const value * bw, const valu
     
 }
 
-value CircularSpace::log_probability( const value * loc, const value * bw, const value * point ) const {
+value CircularSpace::log_probability( const value * loc, const value * bw, 
+    const value * point ) const {
     
     value p;
     if (*bw>KAPPA_GAUSS_APPROX) {
@@ -128,7 +131,8 @@ value CircularSpace::log_probability( const value * loc, const value * bw, const
     
 }
 
-void CircularSpace::log_probability( const value * loc, const value * bw, const value * points, unsigned int n, value * result ) const {
+void CircularSpace::log_probability( const value * loc, const value * bw, 
+    const value * points, unsigned int n, value * result ) const {
     
     for (unsigned int k=0; k<n; ++k) {
         *result++ = log_probability( loc, bw, points++ );
@@ -136,7 +140,8 @@ void CircularSpace::log_probability( const value * loc, const value * bw, const 
     
 }
 
-value CircularSpace::partial_logp( const value * loc, const value * bw, const value * point, std::vector<bool>::const_iterator selection ) const {
+value CircularSpace::partial_logp( const value * loc, const value * bw, 
+    const value * point, std::vector<bool>::const_iterator selection ) const {
     value p = 0.;
     
     if (*selection) {
@@ -154,13 +159,41 @@ value CircularSpace::partial_logp( const value * loc, const value * bw, const va
 }
     
 
-Grid * CircularSpace::grid(unsigned int n) const {
+// yaml
+std::unique_ptr<CircularSpace> CircularSpace::from_yaml( const YAML::Node & node ) {
     
-    std::vector<value> v(n);
-    for (unsigned int k=0; k<n; ++k) {
-        v[k] = ( (2*M_PI*k) / n );
+    if (!node["name"]) {
+        throw std::runtime_error("Ill-formed circular space definition.");
     }
     
-    return new VectorGrid( { v }, specification(), {} );
+    return std::make_unique<CircularSpace>(node["name"].as<std::string>());
     
+} 
+
+YAML::Node CircularSpace::to_yaml_impl() const {
+    YAML::Node node;
+    node["name"] = specification().dim(0).name();
+    return node;
 }
+
+
+// hdf5
+void CircularSpace::to_hdf5_impl(HighFive::Group & group) const {
+    std::string name = specification().dim(0).name();
+    
+    HighFive::DataSet ds_name = group.createDataSet<std::string>(
+        "name", HighFive::DataSpace::From(name));
+    ds_name.write(name);
+}
+
+std::unique_ptr<CircularSpace> CircularSpace::from_hdf5(
+    const HighFive::Group & group) {
+    
+    std::string name;
+    
+    HighFive::DataSet ds_name = group.getDataSet("name");
+    ds_name.read(name);
+    
+    return std::make_unique<CircularSpace>(name);
+}
+
