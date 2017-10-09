@@ -28,7 +28,8 @@ public:
     
     // grid construction
     Grid * grid(unsigned int delta=DEFAULT_ENCODED_GRID_DELTA) const;
-    
+    Grid * grid(const std::vector<value> & v, const std::vector<bool> & valid = {}) const;
+        
     // methods
     virtual value compute_scale_factor( value * bw, bool log = false ) const override;
     virtual value compute_scale_factor( std::vector<bool>::const_iterator selection, 

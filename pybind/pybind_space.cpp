@@ -356,6 +356,31 @@ void pybind_space(py::module &m) {
         -------
         Grid
         
-    )pbdoc"  );
+    )pbdoc"  )
+    
+    .def( "grid", [](const EncodedSpace& obj, py::array_t<value, py::array::c_style | py::array::forcecast> & v, py::array_t<bool, py::array::c_style | py::array::forcecast> & valid) { 
+        
+        auto vec = numpy_array_to_vector(v);
+        auto vec_valid = numpy_array_to_vector( valid );
+        
+        // construct grid
+        return std::unique_ptr<Grid>( obj.grid(vec, vec_valid) );
+        
+    }, py::arg("vector"), py::arg("valid") = std::vector<bool>(0),
+    R"pbdoc(
+        Constructs grid from vector.
+        
+        Parameters
+        ----------
+        vector: 1d array
+            a vector of grid points
+        valid : 1d boolean array
+            For each grid point if it is a valid point or not
+        
+        Returns
+        -------
+        Grid
+        
+    )pbdoc" );
     
 }

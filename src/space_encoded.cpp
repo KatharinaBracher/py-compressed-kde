@@ -55,6 +55,21 @@ Grid * EncodedSpace::grid(unsigned int delta) const {
     return new VectorGrid( { v }, specification(), {} );
 }
 
+Grid * EncodedSpace::grid(const std::vector<value> & v, 
+    const std::vector<bool> & valid) const {
+    
+    // check if all int(values) are in range [0, nlut_-1]
+    auto result = std::find_if(v.begin(), v.end(),
+        [this](const value & n) { return static_cast<unsigned int>(n)>=this->nlut_; });
+    
+    if (result!=v.end()) {
+        throw std::runtime_error("Found grid values out of range.");
+    }
+    
+    return new VectorGrid( {v}, specification(), valid );
+        
+}
+
 // methods
 value EncodedSpace::compute_scale_factor( value * bw, bool log) const {
     
