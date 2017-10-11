@@ -159,3 +159,8 @@ void Grid::to_hdf5_impl(HighFive::Group & group) const {
     throw std::runtime_error("Not implemented.");
 }
 
+
+
+void Grid::at_index(const unsigned int * index, value * result) const {
+    throw std::runtime_error("Not implemented.");
+}

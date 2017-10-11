@@ -57,6 +57,15 @@ public:
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     static std::unique_ptr<MultiSpace> from_hdf5(const HighFive::Group & group);
     
+    virtual void distance( const value * x, const value * y, value * result ) const {
+        for (unsigned int k=0; k<spaces_.size(); ++k) {
+            spaces_[k]->distance(x,y,result);
+            result += spaces_[k]->ndim();
+            x += spaces_[k]->ndim();
+            y += spaces_[k]->ndim();
+        }
+    }
+    
 protected:
     std::vector<std::unique_ptr<Space>> spaces_;
 };

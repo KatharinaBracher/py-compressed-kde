@@ -40,4 +40,8 @@ public:
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     static std::unique_ptr<CircularSpace> from_hdf5(const HighFive::Group & group);
     
+    virtual void distance( const value * x, const value * y, value * result ) const {
+        *result = circular_difference(*y, *x);
+    }
+    
 };

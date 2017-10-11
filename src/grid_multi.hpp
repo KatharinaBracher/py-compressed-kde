@@ -48,6 +48,14 @@ public:
         const SpaceSpecification & space, const std::vector<bool> & valid);
     
     
+    virtual void at_index(const unsigned int * index, value * result) const {
+        for (unsigned int k=0; k<grids_.size(); ++k) {
+            grids_[k]->at_index(index, result);
+            index  += grids_[k]->ndim();
+            result += grids_[k]->ndim();
+        }
+    }
+    
 protected:
     std::vector<std::unique_ptr<Grid>> grids_;
 };

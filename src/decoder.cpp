@@ -30,6 +30,8 @@ Decoder::Decoder( std::vector<std::shared_ptr<PoissonLikelihood>> & likelihoods,
     }
     
     grid_sizes_.push_back( likelihoods_[0][0]->grid().size() );
+    grid_shapes_.push_back( likelihoods_[0][0]->grid().shape() );
+    
 }
     
 Decoder::Decoder( std::vector<std::vector<std::shared_ptr<PoissonLikelihood>>> & likelihoods, 
@@ -64,6 +66,7 @@ Decoder::Decoder( std::vector<std::vector<std::shared_ptr<PoissonLikelihood>>> &
     // test if prior[index].size()==0 || prior[index].size()==likelihoods[0][index]->grid().size()
     for (unsigned int index=0; index<nunion; ++index) {
         grid_sizes_.push_back( likelihoods[0][index]->grid().size() );
+        grid_shapes_.push_back( likelihoods[0][index]->grid().shape() );
         if (prior[index].size()!=0 && prior[index].size()!=grid_sizes_.back()) {
             throw std::runtime_error("Prior does not have correct number of elements.");
         }
@@ -241,6 +244,39 @@ unsigned int Decoder::grid_size(unsigned int index) const {
 
 const std::vector<unsigned int> & Decoder::grid_sizes() const {
     return grid_sizes_;
+}
+
+std::vector<long unsigned int> Decoder::grid_shape(unsigned int index) const {
+    return grid_shapes_[index];
+}
+
+const std::vector<std::vector<long unsigned int>> & Decoder::grid_shapes() const {
+    return grid_shapes_;
+}
+
+const Grid & Decoder::grid(unsigned int index) const {
+    
+    if (nsources()==0) {
+        throw std::runtime_error("No likelihoods.");
+    }
+    
+    if (index>=n_union()) {
+        throw std::runtime_error("Index out of bounds.");
+    }
+    
+    return likelihoods_[0][index]->grid();
+}
+
+std::shared_ptr<StimulusOccupancy> Decoder::stimulus(unsigned int index) {
+    if (nsources()==0) {
+        throw std::runtime_error("No likelihoods.");
+    }
+    
+    if (index>=n_union()) {
+        throw std::runtime_error("Index out of bounds.");
+    }
+    
+    return likelihoods_[0][index]->stimulus();
 }
 
 // likelihood getter

@@ -44,6 +44,18 @@ public:
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     static std::unique_ptr<Grid> from_hdf5(const HighFive::Group & group, const SpaceSpecification & space, const std::vector<bool> & valid, std::vector<long unsigned int> shape );
     
+    virtual void at_index(const unsigned int * index, value * result) const {
+        
+        //unsigned int npoints = array_.size()/ndim();
+        
+        // using shape(), convert index to linear index into array
+        // for this conversion, the strides have to be computed
+        // next, get the ndim() values at linear index in array
+        // if index out of range, set result to std::numeric_limits<value>::quiet_NaN();
+        
+        std::runtime_error("ArrayGrid::at_index has not been implemented.");
+        
+    }
     
 protected:
     std::vector<value> array_;

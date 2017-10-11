@@ -33,6 +33,13 @@ public:
     unsigned int grid_size(unsigned int index=0) const;
     const std::vector<unsigned int> & grid_sizes() const;
     
+    std::vector<long unsigned int> grid_shape(unsigned int index=0) const;
+    const std::vector<std::vector<long unsigned int>> & grid_shapes() const;
+    
+    const Grid & grid(unsigned int index=0) const;
+    
+    std::shared_ptr<StimulusOccupancy> stimulus(unsigned int index=0);
+    
     // likelihood getter
     std::shared_ptr<PoissonLikelihood> likelihood( unsigned int source,
         unsigned int index = 0 );
@@ -71,6 +78,7 @@ protected:
     
     // grid size for each union member
     std::vector<unsigned int> grid_sizes_;
+    std::vector<std::vector<long unsigned int>> grid_shapes_;
     
     std::vector<bool> likelihood_selection_;
 };

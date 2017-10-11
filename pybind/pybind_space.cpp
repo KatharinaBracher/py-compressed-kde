@@ -117,7 +117,69 @@ void pybind_space(py::module &m) {
         -------
         Space
         
-    )pbdoc");
+    )pbdoc")
+    
+    .def("distance", [](Space & obj, py::array_t<value, py::array::c_style | py::array::forcecast> x,
+                                    py::array_t<value, py::array::c_style | py::array::forcecast> y) {
+        
+        unsigned int ndim = obj.ndim();
+        unsigned int npoints;
+        
+        auto bufx = x.request();
+        auto bufy = y.request();
+        
+        if (bufx.shape!=bufy.shape) {
+            throw std::runtime_error("Arrays x and y do not have the same shape.");
+        } else if (bufx.ndim==1 && bufx.shape[0]==ndim) {
+            npoints = 1;
+        } else if (bufx.ndim==2 && bufx.shape[1]==ndim) {
+            npoints = bufx.shape[0];
+        } else {
+            throw std::runtime_error("Expected a (N," + std::to_string(ndim) + ") 2D arrays of values.");
+        }
+        
+        // create output array<value> of same shape
+        auto result = py::array( py::buffer_info(
+            nullptr,
+            sizeof(value),
+            py::format_descriptor<value>::value,
+            1,
+            bufx.shape,
+            bufx.strides
+        ));
+        
+        auto result_buf = result.request();
+        
+        value *p_x = (value *) bufx.ptr;
+        value *p_y = (value *) bufy.ptr;
+        value *p_out = (value *) result_buf.ptr;
+        
+        for (unsigned int k=0; k<npoints; ++k) {
+            obj.distance( p_x, p_y, p_out );
+            p_x += ndim;
+            p_y += ndim;
+            p_out += ndim;
+        }
+        
+        // return output array
+        return result;
+        
+        },
+    py::arg("x"), py::arg("y"),
+    R"pbdoc(
+        Retrieve distance for each dimension
+        
+        Parameters
+        ----------
+        x,y : (ndim,) or (n,ndim) array
+            Array of values
+        
+        Returns
+        -------
+        array
+            distance between x and y
+        
+    )pbdoc" );
     
     
     // EUCLIDEAN SPACE CLASS
@@ -341,6 +403,31 @@ void pybind_space(py::module &m) {
             Bandwidth for default gaussian kernel
         
     )pbdoc"  )
+    
+    .def( "__init__", [](EncodedSpace & obj, std::string label, py::array_t<value, py::array::c_style | py::array::forcecast> points, py::array_t<value, py::array::c_style | py::array::forcecast> distances, value bandwidth) {
+        auto vec_points = numpy_array_to_vector( points );
+        auto vec_distances = numpy_array_to_vector( distances );
+        new (&obj) EncodedSpace( label, vec_points, vec_distances, bandwidth );
+    },
+    py::arg("label"), py::arg("points"), py::arg("distances"), py::arg("bandwidth")=DEFAULT_ENCODED_BANDWIDTH,
+    R"pbdoc(
+        Constructs Encoded Space.
+        
+        Parameters
+        ----------
+        label : string
+            label for encoded dimension
+        points : 1d array
+            vector of encoded points
+        distances : (n,n) array
+            matrix of squared distances
+        bandwidth : scalar
+            Bandwidth for default gaussian kernel
+        
+    )pbdoc"  )
+    
+    .def_property_readonly("use_index", &EncodedSpace::use_index,
+    R"pbdoc(True if using index internally.)pbdoc")
     
     .def( "grid", [](const EncodedSpace& obj, unsigned int delta) { return std::unique_ptr<Grid>( obj.grid(delta) ); },
     py::arg("delta")=DEFAULT_ENCODED_GRID_DELTA,

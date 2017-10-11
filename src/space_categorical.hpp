@@ -36,7 +36,13 @@ public:
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     static std::unique_ptr<CategoricalSpace> from_hdf5(const HighFive::Group & group);
     
-    
+    virtual void distance( const value * x, const value * y, value * result ) const {
+        if (static_cast<unsigned int>(*x) == static_cast<unsigned int>(*y)) { 
+            *result = 0.;
+        } else {
+            *result = std::numeric_limits<value>::infinity();
+        }
+    }
     
 protected:
     std::vector<std::string> labels_;

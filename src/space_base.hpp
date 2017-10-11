@@ -123,6 +123,10 @@ public:
     void to_hdf5(HighFive::Group & group) const;
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     
+    virtual void distance( const value * x, const value * y, value * result ) const {
+        throw std::runtime_error("Not implemented");
+    }
+    
 protected:
     std::string klass_;
     SpaceSpecification spec_;

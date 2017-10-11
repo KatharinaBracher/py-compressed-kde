@@ -58,6 +58,14 @@ public:
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     static std::unique_ptr<EuclideanSpace> from_hdf5(const HighFive::Group & group);
     
+    virtual void distance( const value * x, const value * y, value * result ) const {
+        for (unsigned int k=0; k<ndim(); ++k) {
+            *result = std::abs(*y - *x);
+            ++result;
+            ++x;
+            ++y;
+        }
+    }
     
 protected:
     std::vector<std::string> names_;

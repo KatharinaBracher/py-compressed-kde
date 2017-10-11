@@ -7,24 +7,32 @@ static const value DEFAULT_ENCODED_BANDWIDTH = 1.;
 static const unsigned int DEFAULT_ENCODED_INDEX = 0;
 static const unsigned int DEFAULT_ENCODED_GRID_DELTA = 1;
 
+value nearest(const std::vector<value> & v, value x);
+unsigned int nearest_index(const std::vector<value> & v, value x);
+
 class EncodedSpace : public SpaceBase<EncodedSpace> {
 public:
     // constructors
-    EncodedSpace( std::string name, std::vector<value> & lut, 
+    EncodedSpace( std::string name, const std::vector<value> & lut, 
         value bandwidth = DEFAULT_ENCODED_BANDWIDTH, 
         unsigned int index = DEFAULT_ENCODED_INDEX);
-    EncodedSpace( std::string name, std::vector<value> & lut, const Kernel & k, 
+    EncodedSpace( std::string name, const std::vector<value> & points,
+        const std::vector<value> & lut, 
         value bandwidth = DEFAULT_ENCODED_BANDWIDTH, 
+        unsigned int index = DEFAULT_ENCODED_INDEX);
+    EncodedSpace( std::string name, const std::vector<value> & points,
+        const std::vector<value> & lut,
+        const Kernel & k, value bandwidth = DEFAULT_ENCODED_BANDWIDTH, 
         unsigned int index = DEFAULT_ENCODED_INDEX);
     
     // copy constructor
     EncodedSpace( const EncodedSpace & other )
-        : SpaceBase<EncodedSpace>(other), nlut_(other.nlut_), lut_(other.lut_), 
-          kernel_(other.kernel_->clone()) {}
+        : SpaceBase<EncodedSpace>(other), use_index_(other.use_index_),
+          nlut_(other.nlut_), points_(other.points_),
+          lut_(other.lut_), kernel_(other.kernel_->clone()) {}
     
-    SpaceSpecification make_spec( std::string name, std::vector<value> & lut, 
-        const Kernel & k );
-    Component make_kernel( value bw, unsigned int idx, const Kernel & k) const;
+    SpaceSpecification make_spec( std::string name, const std::vector<value> & lut, const Kernel & k );
+    Component make_kernel( value bw, const std::vector<value> & points, unsigned int idx, const Kernel & k) const;
     
     // grid construction
     Grid * grid(unsigned int delta=DEFAULT_ENCODED_GRID_DELTA) const;
@@ -34,6 +42,8 @@ public:
     virtual value compute_scale_factor( value * bw, bool log = false ) const override;
     virtual value compute_scale_factor( std::vector<bool>::const_iterator selection, 
         value * bw, bool log=false ) const override;
+    
+    unsigned int get_index(value x) const;
     
     virtual value mahalanobis_distance_squared( const value * refloc, 
         const value * refbw, const value * targetloc, value threshold) const override;
@@ -61,8 +71,16 @@ public:
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     static std::unique_ptr<EncodedSpace> from_hdf5(const HighFive::Group & group);
     
+    bool use_index() const { return use_index_; }
+    
+    virtual void distance( const value * x, const value * y, value * result ) const {
+        *result = std::sqrt( (*lut_)[get_index(*x) + get_index(*y)*nlut_] );
+    }
+    
 protected:
+    bool use_index_;
     unsigned int nlut_;
+    std::shared_ptr<std::vector<value>> points_; // set once, read by many
     std::shared_ptr<std::vector<value>> lut_; // set once, read by many
     std::unique_ptr<Kernel> kernel_;
 };

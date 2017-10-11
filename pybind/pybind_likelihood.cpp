@@ -60,6 +60,9 @@ void pybind_likelihood(py::module &m) {
     .def_property_readonly("event_distribution", py::cpp_function(&PoissonLikelihood::event_distribution, py::return_value_policy::reference_internal),
     R"pbdoc(Underlying (compressed) density of merged events.)pbdoc")
     
+    .def_property_readonly("stimulus", &PoissonLikelihood::stimulus,
+    R"pbdoc(Stimulus occupancy.)pbdoc")
+    
     .def_property("random_insertion", &PoissonLikelihood::random_insertion, &PoissonLikelihood::set_random_insertion,
     R"pbdoc(Randomize new samples before merging into distribution.)pbdoc")
     

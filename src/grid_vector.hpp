@@ -47,6 +47,17 @@ public:
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     static std::unique_ptr<Grid> from_hdf5(const HighFive::Group & group, const SpaceSpecification & space, const std::vector<bool> & valid);
     
+    virtual void at_index(const unsigned int * index, value * result) const {
+        for (auto & v : vectors_) {
+            if (*index >= v.size()) {
+                *result = std::numeric_limits<value>::quiet_NaN();
+            } else {
+                *result = v[*index];
+            }
+            ++index;
+            ++result;
+        }
+    }
     
 protected:
     std::vector<std::vector<value>> vectors_;

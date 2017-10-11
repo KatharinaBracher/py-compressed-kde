@@ -19,6 +19,12 @@ std::vector<long unsigned int> shape_from_array_args( const std::vector<long uns
         s = shape;
     }
     
+    long unsigned int product = std::accumulate(s.begin(), s.end(), 1, std::multiplies<long unsigned int>());
+    
+    if (product!=npoints) {
+        std::runtime_error("Shape does not match number of points.");
+    }
+    
     return s;
 }
 

@@ -58,6 +58,69 @@ void pybind_grid(py::module &m) {
         -------
         Grid
         
+    )pbdoc" )
+    
+    .def("at_index", [](Grid & obj, py::array_t<unsigned int, py::array::c_style | py::array::forcecast> index) {
+        unsigned int ndim = obj.ndim();
+        unsigned int npoints;
+        
+        std::vector<long unsigned int> strides;
+        
+        // check if index is 2d array of size (n,ndim)
+        // or 1d array of size (ndim,)
+        auto buf = index.request();
+        
+        if (buf.ndim==1 && buf.shape[0]==ndim) {
+            npoints = 1;
+            strides.push_back(sizeof(value));
+        } else if (buf.ndim==2 && buf.shape[1]==ndim) {
+            npoints = buf.shape[0];
+            strides.push_back(sizeof(value)*ndim);
+            strides.push_back(sizeof(value));
+        } else {
+            throw std::runtime_error("Expected a (N," + std::to_string(ndim) + ") 2D array of samples.");
+        }
+        
+        // create output array<value> of same shape
+        auto result = py::array( py::buffer_info(
+            nullptr,
+            sizeof(value),
+            py::format_descriptor<value>::value,
+            1,
+            buf.shape,
+            strides
+        ));
+        
+        auto result_buf = result.request();
+        
+        // repeatedly call obj.at_index( in, out )
+        unsigned int *p_in = (unsigned int *) buf.ptr;
+        value *p_out = (value *) result_buf.ptr;
+        
+        for (unsigned int k=0; k<npoints; ++k) {
+            obj.at_index( p_in, p_out );
+            p_in += ndim;
+            p_out += ndim;
+        }
+        
+        // return output array
+        return result;
+        
+        },
+    py::arg("index"),
+    R"pbdoc(
+        Retrieve grid values at index
+        
+        Parameters
+        ----------
+        index : (ndim,) or (n,ndim) array
+            Array of indices
+        
+        Returns
+        -------
+        array
+            grid values at index
+        
     )pbdoc" );
         
 }

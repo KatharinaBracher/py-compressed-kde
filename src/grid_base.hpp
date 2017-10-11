@@ -95,6 +95,7 @@ public:
     void to_hdf5(HighFive::Group & group) const;
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     
+    virtual void at_index(const unsigned int * index, value * result) const;
     
 protected:
     std::string klass_;

@@ -37,6 +37,9 @@ void pybind_stimulus(py::module &m) {
     .def_property("random_insertion", &StimulusOccupancy::random_insertion, &StimulusOccupancy::set_random_insertion,
     R"pbdoc(Whether new stimuli will be merged into the distribution in randomized order.)pbdoc")
     
+    .def_property_readonly("space", py::cpp_function(&StimulusOccupancy::space, py::return_value_policy::reference_internal),
+    R"pbdoc(Stimulus space.)pbdoc")
+    
     .def("to_yaml", [](StimulusOccupancy &m)->std::string {
         YAML::Emitter out;
         YAML::Node node = m.to_yaml();

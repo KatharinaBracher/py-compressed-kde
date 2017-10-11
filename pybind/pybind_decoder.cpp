@@ -44,17 +44,35 @@ void pybind_decoder(py::module &m) {
     .def_property_readonly("n_union", &Decoder::n_union,
     R"pbdoc(Number of stimulus spaces over which decoding is performed.)pbdoc")
     
-    .def_property_readonly("grid_sizes", &Decoder::grid_sizes,
-    R"pbdoc(Grid size for each stimulus space.)pbdoc")
+    .def_property_readonly("grid_shapes", &Decoder::grid_shapes,
+    R"pbdoc(Grid shape for each stimulus space.)pbdoc")
     
-    .def("grid_size", &Decoder::grid_size, py::arg("source"),
+    .def("grid_shape", &Decoder::grid_shape, py::arg("index")=0,
     R"pbdoc(
         Grid size.
         
         Parameters
         ----------
-        source : int
-            Index of source likelihood (zero-based).
+        index : int
+            Index of stimulus space in union (zero-based).
+        
+        Returns
+        -------
+        grid shape
+            
+    )pbdoc")
+    
+    .def_property_readonly("grid_sizes", &Decoder::grid_sizes,
+    R"pbdoc(Grid size for each stimulus space.)pbdoc")
+    
+    .def("grid_size", &Decoder::grid_size, py::arg("index")=0,
+    R"pbdoc(
+        Grid size.
+        
+        Parameters
+        ----------
+        index : int
+            Index of stimulus space in union (zero-based).
         
         Returns
         -------
@@ -67,6 +85,53 @@ void pybind_decoder(py::module &m) {
     
     .def_property_readonly("enabled_sources", &Decoder::enabled_sources,
     R"pbdoc(Enabled state for all sources.)pbdoc")
+    
+    .def("grid", &Decoder::grid, py::return_value_policy::reference_internal, py::arg("index")=0,
+    R"pbdoc(
+        Get stimulus space grid.
+        
+        Parameters
+        ----------
+        index : int
+            Index of stimulus space in union (zero-based).
+        
+        Returns
+        -------
+        Grid
+            
+    )pbdoc")
+    
+    .def("stimulus", &Decoder::stimulus, py::arg("index")=0,
+    R"pbdoc(
+        Get stimulus space.
+        
+        Parameters
+        ----------
+        index : int
+            Index of stimulus space in union (zero-based).
+        
+        Returns
+        -------
+        Stimulus
+            
+    )pbdoc")
+    
+    .def("likelihood", &Decoder::likelihood, py::arg("source"), py::arg("index")=0,
+    R"pbdoc(
+        Get likelihood.
+        
+        Parameters
+        ----------
+        source : int
+            Index of source likelihood (zero-based).
+        index : int
+            Index of stimulus space in union (zero-based).
+        
+        Returns
+        -------
+        PoissonLikelihood
+            
+    )pbdoc")
     
     .def("enable_source", &Decoder::enable_source, py::arg("source"),
     R"pbdoc(
@@ -142,14 +207,19 @@ void pybind_decoder(py::module &m) {
         // for each union
         for (unsigned int k = 0 ; k<obj.n_union(); ++k) {
             
+            std::vector<long unsigned int> strides(obj.grid_shape(k).size(), sizeof(value));
+            for (int s=obj.grid_shape(k).size()-2; s>=0; --s) {
+                strides[s] = strides[s+1] * obj.grid_shape(k)[s+1];
+            }
+            
             // construct array buffer
             auto result = py::array( py::buffer_info(
                 nullptr,
                 sizeof(value),
                 py::format_descriptor<value>::value,
                 1,
-                {obj.grid_size(k)},
-                {sizeof(value)}
+                obj.grid_shape(k),
+                strides
             ));
             
             auto result_buf = result.request();
@@ -194,14 +264,19 @@ void pybind_decoder(py::module &m) {
     )pbdoc")
     .def("decode_single", [](Decoder & obj, std::vector<py::array_t<value, py::array::c_style | py::array::forcecast>> events, value delta_t, unsigned int index, bool normalize)->py::array_t<value> {
         
+        std::vector<long unsigned int> strides(obj.grid_shape(index).size(), sizeof(value));
+        for (int s=obj.grid_shape(index).size()-2; s>=0; --s) {
+            strides[s] = strides[s+1] * obj.grid_shape(index)[s+1];
+        }
+        
         // construct array buffer
         auto result = py::array( py::buffer_info(
             nullptr,
             sizeof(value),
             py::format_descriptor<value>::value,
             1,
-            {obj.grid_size(index)},
-            {sizeof(value)}
+            obj.grid_shape(index),
+            strides
         ));
         
         auto result_buf = result.request();
