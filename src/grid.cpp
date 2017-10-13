@@ -1,5 +1,6 @@
 #include "grid.hpp"
 #include "spacespec.hpp"
+#include <fstream>
 
 // yaml
 std::unique_ptr<Grid> grid_from_yaml( const YAML::Node & node ) {
@@ -28,6 +29,16 @@ std::unique_ptr<Grid> grid_from_yaml( const YAML::Node & node ) {
     } else {
         throw std::runtime_error("Unknown grid.");
     }
+    
+}
+
+std::unique_ptr<Grid> load_grid_from_yaml( std::string path ) {
+        
+    std::ifstream ifs(path, std::ifstream::in);
+    
+    auto node = YAML::Load( ifs );
+    
+    return grid_from_yaml( node );
     
 }
 

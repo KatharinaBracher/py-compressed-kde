@@ -1,4 +1,5 @@
 #include "grid_base.hpp"
+#include <iostream>
 
 // constructor
 Grid::Grid( std::string klass, const SpaceSpecification & space, 
@@ -126,6 +127,17 @@ YAML::Node Grid::to_yaml() const {
 
 YAML::Node Grid::to_yaml_impl() const {
     throw std::runtime_error("Not implemented.");
+}
+
+void Grid::save_to_yaml( std::ostream & stream, bool flow ) const {
+    auto node = to_yaml(); 
+    YAML::Emitter out; 
+    if (flow) {out << YAML::Flow;}
+    out << node; 
+    stream << out.c_str();
+}
+void Grid::save_to_yaml( std::string path, bool flow ) const {
+    std::ofstream fout(path); save_to_yaml(fout, flow);
 }
 
 // hdf5

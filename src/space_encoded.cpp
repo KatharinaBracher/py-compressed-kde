@@ -325,7 +325,7 @@ std::unique_ptr<EncodedSpace> EncodedSpace::from_yaml( const YAML::Node & node )
         throw std::runtime_error("Ill-formed encoded space definition.");
     }
     
-    std::string name = node["names"].as<std::string>();
+    std::string name = node["name"].as<std::string>();
     
     std::unique_ptr<Kernel> k;
     

@@ -60,6 +60,33 @@ void pybind_grid(py::module &m) {
         
     )pbdoc" )
     
+    .def("save_to_yaml", [](const Grid& obj, std::string path) { obj.save_to_yaml( path ); },
+    py::arg("path"),
+    R"pbdoc(
+        Save grid definition to YAML file.
+        
+        Parameters
+        ----------
+        path : string
+            path tho YAML file
+        
+    )pbdoc" )
+    
+    .def_static("load_from_yaml", [](std::string path) { return std::unique_ptr<Grid>( load_grid_from_yaml(path) ); }, py::arg("path"),
+    R"pbdoc(
+        Load grid definition from file.
+        
+        Parameters
+        ----------
+        path : string
+            path to YAML file
+        
+        Returns
+        -------
+        Grid
+        
+    )pbdoc" )
+    
     .def("at_index", [](Grid & obj, py::array_t<unsigned int, py::array::c_style | py::array::forcecast> index) {
         unsigned int ndim = obj.ndim();
         unsigned int npoints;

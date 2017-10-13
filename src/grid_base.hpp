@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 
 // forward declarations
 class Space;
@@ -90,6 +91,8 @@ public:
     // yaml
     YAML::Node to_yaml() const;
     virtual YAML::Node to_yaml_impl() const;
+    void save_to_yaml( std::ostream & stream, bool flow=false ) const;
+    void save_to_yaml( std::string path, bool flow=false ) const;
     
     // hdf5
     void to_hdf5(HighFive::Group & group) const;

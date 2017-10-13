@@ -137,15 +137,15 @@ YAML::Node Space::to_yaml_impl() const {
     throw std::runtime_error("Not implemented.");
 }
 
-void Space::save_to_yaml( std::ostream & stream ) const {
+void Space::save_to_yaml( std::ostream & stream, bool flow ) const {
     auto node = to_yaml(); 
-    YAML::Emitter out; 
-    out << YAML::Flow; 
+    YAML::Emitter out;
+    if (flow) { out << YAML::Flow; }
     out << node; 
     stream << out.c_str();
 }
-void Space::save_to_yaml( std::string path ) const {
-    std::ofstream fout(path); save_to_yaml(fout);
+void Space::save_to_yaml( std::string path, bool flow ) const {
+    std::ofstream fout(path); save_to_yaml(fout, flow);
 }
 
 

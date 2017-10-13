@@ -44,6 +44,15 @@ public:
     const SpaceSpecification & specification() const;
     const Component & default_kernel() const;
     
+    void set_default_kernel(const Component & k) {
+        // check if dimensionalities are OK
+        if (k.location.size()!=ndim() || k.bandwidth.size()!=nbw()) {
+            throw std::runtime_error("Cannot set default kernel. Dimensions do not match.");
+        }
+        
+        default_kernel_ = k;
+    }
+    
     std::unique_ptr<Component> kernel() const;
     
     // kernel construction
@@ -116,8 +125,8 @@ public:
     // yaml
     YAML::Node to_yaml() const;
     virtual YAML::Node to_yaml_impl() const;
-    void save_to_yaml( std::ostream & stream ) const;
-    void save_to_yaml( std::string path ) const;
+    void save_to_yaml( std::ostream & stream, bool flow=false ) const;
+    void save_to_yaml( std::string path, bool flow=false ) const;
     
     // hdf5
     void to_hdf5(HighFive::Group & group) const;

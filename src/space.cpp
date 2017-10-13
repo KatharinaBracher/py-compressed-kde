@@ -5,6 +5,8 @@
 // yaml
 std::unique_ptr<Space> space_from_yaml( const YAML::Node & node ) {
     
+    std::unique_ptr<Space> ptr;
+    
     if (!node.IsMap() || !node["class"] ) {
         throw std::runtime_error("Not a valid YAML description of space.");
     }
@@ -12,18 +14,24 @@ std::unique_ptr<Space> space_from_yaml( const YAML::Node & node ) {
     std::string klass = node["class"].as<std::string>( "unknown" );
     
     if (klass=="multi") {
-        return MultiSpace::from_yaml( node["space"] );
+        ptr = MultiSpace::from_yaml( node["space"] );
     } else if (klass=="euclidean") {
-        return EuclideanSpace::from_yaml( node["space"] );
+        ptr = EuclideanSpace::from_yaml( node["space"] );
     } else if (klass=="categorical") {
-        return CategoricalSpace::from_yaml( node["space"] );
+        ptr = CategoricalSpace::from_yaml( node["space"] );
     } else if (klass=="circular") {
-        return CircularSpace::from_yaml( node["space"] );
+        ptr = CircularSpace::from_yaml( node["space"] );
     } else if (klass=="encoded") {
-        return EncodedSpace::from_yaml( node["space"] );
+        ptr = EncodedSpace::from_yaml( node["space"] );
     } else {
         throw std::runtime_error("Unknown space.");
     }
+    
+    auto default_kernel = Component::from_yaml(node["kernel"]);
+    
+    ptr->set_default_kernel(*default_kernel);
+    
+    return ptr;
     
 }
 
@@ -41,21 +49,29 @@ std::unique_ptr<Space> load_space_from_yaml( std::string path ) {
 // hdf5
 std::unique_ptr<Space> space_from_hdf5(const HighFive::Group & group) {
     
+    std::unique_ptr<Space> ptr;
+    
     std::string klass;
     HighFive::Attribute attr_klass = group.getAttribute("class");
     attr_klass.read(klass);
     
     if (klass=="multi") {
-        return MultiSpace::from_hdf5( group.getGroup("space") );
+        ptr = MultiSpace::from_hdf5( group.getGroup("space") );
     } else if (klass=="euclidean") {
-        return EuclideanSpace::from_hdf5( group.getGroup("space") );
+        ptr = EuclideanSpace::from_hdf5( group.getGroup("space") );
     } else if (klass=="categorical") {
-        return CategoricalSpace::from_hdf5( group.getGroup("space") );
+        ptr = CategoricalSpace::from_hdf5( group.getGroup("space") );
     } else if (klass=="circular") {
-        return CircularSpace::from_hdf5( group.getGroup("space") );
+        ptr = CircularSpace::from_hdf5( group.getGroup("space") );
     } else if (klass=="encoded") {
-        return EncodedSpace::from_hdf5( group.getGroup("space") );
+        ptr = EncodedSpace::from_hdf5( group.getGroup("space") );
     } else {
         throw std::runtime_error("Unknown space.");
     }
+    
+    auto default_kernel = Component::from_hdf5(group.getGroup("kernel"));
+    
+    ptr->set_default_kernel(*default_kernel);
+    
+    return ptr;
 }
