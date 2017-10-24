@@ -37,6 +37,7 @@ public:
     unsigned int ndim() const;
     
     const std::vector<bool> & valid() const;
+    unsigned int ninvalid() const;
     unsigned int nvalid() const;
     
     // space
@@ -105,7 +106,7 @@ protected:
     SpaceSpecification spec_;
     std::vector<long unsigned int> shape_;
     std::vector<bool> valid_;
-    unsigned int nvalid_;
+    unsigned int ninvalid_;
 };
 
 template <typename T>
