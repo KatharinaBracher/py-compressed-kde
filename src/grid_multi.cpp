@@ -79,7 +79,7 @@ void MultiGrid::probability( const MultiSpace & space, value weight, const value
         bw += space.child(k).nbw();
     }
     
-    if (nvalid()>0) {
+    if (ninvalid()>0) {
         multiply_add_vectors( tmp, size(), weight, result, valid() );
     } else {
         multiply_add_vectors( tmp, size(), weight, result );
@@ -156,7 +156,7 @@ void MultiGrid::partial_logp( const MultiSpace & space, std::vector<bool>::const
         
     }
     
-    if (nvalid()>0) {
+    if (ninvalid()>0) {
         add_assign_vectors( tmp, size(), factor, result, valid() );
     } else {
         add_assign_vectors( tmp, size(), factor, result );

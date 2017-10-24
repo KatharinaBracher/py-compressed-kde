@@ -45,10 +45,21 @@ void VectorGrid::probability( const CircularSpace & space, value weight,
 }
 void VectorGrid::probability( const EncodedSpace & space, value weight, 
     const value * loc, const value * bw, value * result )  {
-    // ignore valid vector for encoded variables
+
     value * ptr = vectors_[0].data();
-    for (unsigned int n=0; n<vectors_[0].size(); ++n) {
-        *result++ += weight*space.probability( loc, bw, ptr++ );
+    if (ninvalid()>0) {
+        auto vptr = valid().cbegin();
+        for (unsigned int n=0; n<vectors_[0].size(); ++n) {
+            if (*vptr++==true) {
+                *result += weight*space.probability( loc, bw, ptr );
+            }
+            ++result;
+            ++ptr;
+        }
+    } else {
+        for (unsigned int n=0; n<vectors_[0].size(); ++n) {
+            *result++ += weight*space.probability( loc, bw, ptr++ );
+        }
     }
 }
 void VectorGrid::probability( const EuclideanSpace & space, value weight, 
@@ -57,7 +68,7 @@ void VectorGrid::probability( const EuclideanSpace & space, value weight,
         space.probability( loc++, bw++, vectors_[k].data(), vectors_[k].size(), ptemp_[k].data() );
     }
     
-    if (nvalid()>0) {
+    if (ninvalid()>0) {
         multiply_add_vectors( ptemp_, size(), weight, result, valid() );
     } else {
         multiply_add_vectors( ptemp_, size(), weight, result );
@@ -95,8 +106,19 @@ void VectorGrid::partial_logp( const EncodedSpace & space,
     const value * loc, const value * bw, value * result ) {
     
     value * ptr = vectors_[0].data();
-    for (unsigned int k=0; k<vectors_[0].size(); ++k) {
-        *result++ = factor + space.partial_logp( loc, bw, ptr++, selection );
+    if (ninvalid()>0) {
+        auto vptr = valid().cbegin();
+        for (unsigned int n=0; n<vectors_[0].size(); ++n) {
+            if (*vptr++==true) {
+                *result = factor + space.partial_logp( loc, bw, ptr, selection );
+            }
+            ++result;
+            ++ptr;
+        }
+    } else {
+        for (unsigned int n=0; n<vectors_[0].size(); ++n) {
+            *result++ = factor + space.partial_logp( loc, bw, ptr++, selection );
+        }
     }
 }
 void VectorGrid::partial_logp( const EuclideanSpace & space, 
@@ -117,7 +139,7 @@ void VectorGrid::partial_logp( const EuclideanSpace & space,
         ++bw;
     }
     
-    if (nvalid()>0) {
+    if (ninvalid()>0) {
         add_assign_vectors( ptemp_, size(), factor, result, valid() );
     } else {
         add_assign_vectors( ptemp_, size(), factor, result );

@@ -14,7 +14,11 @@ Grid::Grid( std::string klass, const SpaceSpecification & space,
         throw std::runtime_error("Incompatible shape vector.");
     }
     
-    nvalid_ = std::count( valid_.cbegin(), valid_.cend(), true );
+    if (valid_.empty()) {
+        ninvalid_ = 0;
+    } else {
+        ninvalid_ = std::count( valid_.cbegin(), valid_.cend(), false );
+    }
     
 }
 
@@ -34,7 +38,8 @@ unsigned int Grid::size() const {
 unsigned int Grid::ndim() const { return spec_.ndim(); }
 
 const std::vector<bool> & Grid::valid() const { return valid_; }
-unsigned int Grid::nvalid() const { return nvalid_; }
+unsigned int Grid::ninvalid() const { return ninvalid_; }
+unsigned int Grid::nvalid() const { return size()-ninvalid(); }
 
 // space
 const SpaceSpecification & Grid::specification() const {

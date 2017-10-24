@@ -37,7 +37,8 @@ ArrayGrid::ArrayGrid( const std::vector<value> & array,
         array_(array) {
     
     if (this->valid().size()>0 && array_.size()!=ndim()*nvalid()) {
-        throw std::runtime_error("Incorrect number of points in array.");
+        throw std::runtime_error("Expecting the same number of grid points "
+            "in array as the number of valid points.");
     }
     
     unsigned int npoints = array_.size() / ndim();
@@ -72,27 +73,38 @@ void ArrayGrid::probability( const EncodedSpace & space, value weight,
     const value * loc, const value * bw, value * result )  {
     // ignore valid vector for encoded variables
     value * ptr = array_.data();
-    for (unsigned int n=0; n<array_.size(); ++n) {
-        *result++ += weight*space.probability( loc, bw, ptr++ );
+    if (ninvalid()>0) {
+        auto vptr = valid().cbegin();
+        // loop through all grid points
+        for (unsigned int k=0; k<array_.size(); ++k) {
+            if (*vptr++==true) {
+                *result += weight*space.probability( loc, bw, ptr++ );
+            }
+            ++result;
+        }
+    } else {
+        for (unsigned int n=0; n<array_.size(); ++n) {
+            *result++ += weight*space.probability( loc, bw, ptr++ );
+        }
     }
 }
 void ArrayGrid::probability( const EuclideanSpace & space, value weight, 
     const value * loc, const value * bw, value * result )  {
     value * ptr = array_.data();
     
-    if (nvalid()>0) {
+    if (ninvalid()>0) {
         auto vptr = valid().cbegin();
         // loop through all grid points
         for (unsigned int k=0; k<size(); ++k) {
             if (*vptr++==true) {
-                *result = space.probability( loc, bw, ptr );
+                *result += weight*space.probability( loc, bw, ptr );
                 ptr += ndim();
             }
             ++result;
         }
     } else {
         for (unsigned int k=0; k<array_.size()/ndim(); ++k) {
-            *result++ += space.probability( loc, bw, ptr );
+            *result++ += weight*space.probability( loc, bw, ptr );
             ptr += ndim();
         }
     }
