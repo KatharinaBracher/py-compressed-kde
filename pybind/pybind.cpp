@@ -9,9 +9,9 @@ void pybind_stimulus( py::module & );
 void pybind_likelihood( py::module & );
 void pybind_decoder( py::module & );
 
-PYBIND11_PLUGIN(compressed_kde) {
+PYBIND11_MODULE(compressed_kde, m) {
 
-    py::module m("compressed_kde",
+    m.doc() = \
     R"pbdoc(
         ===================================================
         Compressed KDE (:mod:`fklab.decode.compressed_kde`)
@@ -38,7 +38,7 @@ PYBIND11_PLUGIN(compressed_kde) {
             PoissonLikelihood
             Decoder
             
-    )pbdoc");
+    )pbdoc";
     
     pybind_component(m);
     pybind_kernel(m);
@@ -48,7 +48,5 @@ PYBIND11_PLUGIN(compressed_kde) {
     pybind_stimulus(m);
     pybind_likelihood(m);
     pybind_decoder(m);
-    
-    return m.ptr();
     
 }
