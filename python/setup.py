@@ -50,7 +50,7 @@ setup(
     name = "py-compressed-decoder",
     version = "0.1.0",
     packages = ['fklab.decode'],
-    install_requires=['hdf5', 'yaml-cpp', 'pybind11>=2.2', 'boost'],
+    #install_requires=['hdf5', 'yaml-cpp', 'pybind11>=2.2', 'boost'],
     ext_modules = extensions,
     cmdclass = {'build_ext': my_build_ext},
 )
