@@ -14,8 +14,10 @@ requirements:
     - setuptools
     - pybind11>=2.2
     - yaml-cpp
+    - hdf5
     - boost
   run:
     - python
     - yaml-cpp
+    - hdf5
     - boost
