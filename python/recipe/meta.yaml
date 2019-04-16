@@ -1,0 +1,21 @@
+package:
+  name: py-compressed-decoder
+  version: "0.1.0"
+
+source:
+  git_url: ../..
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - python {{ python }}
+    - setuptools
+    - pybind11>=2.2
+    - yaml-cpp
+    - boost
+  run:
+    - python
+    - yaml-cpp
+    - boost
