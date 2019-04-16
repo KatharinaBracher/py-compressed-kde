@@ -1,0 +1,17 @@
+# This is a sample build configuration for Python.
+# Check our guides at https://confluence.atlassian.com/x/x4UWN for more examples.
+# Only use spaces to indent your .yml configuration.
+# -----
+# You can specify a custom docker image from Docker Hub as your build environment.
+image: fklab/pybuild:latest
+
+pipelines:
+  custom:
+    build:
+      - step:
+          name: build package and deploy to anaconda cloud
+          deployment: production
+          script: # Modify the commands below to build your repository.
+            - anaconda login --username $ANACONDA_USER --password $ANACONDA_PWD
+            - conda config --set anaconda_upload yes
+            - conda build python/recipe --user KloostermanLab
