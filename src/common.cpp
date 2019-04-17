@@ -1,6 +1,9 @@
 #include "common.hpp"
+
 #include <stdint.h>
 #include <stdexcept>
+
+#include <numeric>
 
 float fastpow2 (float p) {
   float offset = (p < 0) ? 1.0f : 0.0f;
