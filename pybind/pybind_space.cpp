@@ -189,7 +189,8 @@ void pybind_space(py::module &m) {
         
         Parameters
         ----------
-        labels for dimensions
+        labels : [strings]
+            labels for dimensions
         kernel : Kernel
             Gaussian, Epanechnikov or Box kernel
         bandwidth : 1d array
