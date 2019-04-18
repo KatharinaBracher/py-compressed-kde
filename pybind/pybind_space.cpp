@@ -27,6 +27,8 @@ void pybind_space(py::module &m) {
     
     .def( "issubspace", &Space::issubspace, py::arg("space"),
     R"pbdoc(
+        issubspace(space) -> bool
+
         Test if space is subspace.
         
         Parameters
@@ -41,6 +43,8 @@ void pybind_space(py::module &m) {
     
     .def( "selection", &Space::selection, py::arg("space"),
     R"pbdoc(
+        selection(space) -> [bool]
+
         Selection of dimensions that make up subspace.
         
         Parameters
@@ -50,7 +54,7 @@ void pybind_space(py::module &m) {
         
         Returns
         -------
-        [bools]
+        [bool]
             For each dimension if it is part of the subspace
         
     )pbdoc" )
@@ -66,6 +70,8 @@ void pybind_space(py::module &m) {
         std::string s = out.c_str();
         return s;},
     R"pbdoc(
+        to_yaml() -> str
+
         Represent space definition as YAML.
         
         Returns
@@ -77,6 +83,8 @@ void pybind_space(py::module &m) {
     .def("save_to_yaml", [](const Space& obj, std::string path) { obj.save_to_yaml( path ); },
     py::arg("path"),
     R"pbdoc(
+        save_to_yaml(path) -> None
+
         Save space definition to YAML file.
         
         Parameters
@@ -88,6 +96,8 @@ void pybind_space(py::module &m) {
     
     .def_static("load_from_yaml", [](std::string path) { return std::unique_ptr<Space>( load_space_from_yaml(path) ); }, py::arg("path"),
     R"pbdoc(
+        load_from_yaml(path) -> Space
+
         Load space definition from file.
         
         Parameters
@@ -106,7 +116,9 @@ void pybind_space(py::module &m) {
         return std::unique_ptr<Space>( space_from_yaml( node ) );
     }, py::arg("string"),
     R"pbdoc(
-        Construct space definition from YAML
+        from_yaml(string) -> Space
+        
+        Construct space definition from YAML.
         
         Parameters
         ----------
@@ -167,6 +179,8 @@ void pybind_space(py::module &m) {
         },
     py::arg("x"), py::arg("y"),
     R"pbdoc(
+        distance(x, y) -> array
+
         Retrieve distance for each dimension
         
         Parameters
@@ -189,7 +203,8 @@ void pybind_space(py::module &m) {
         
         Parameters
         ----------
-        labels for dimensions
+        labels: [strings]
+            labels for dimensions
         kernel : Kernel
             Gaussian, Epanechnikov or Box kernel
         bandwidth : 1d array
@@ -201,19 +216,7 @@ void pybind_space(py::module &m) {
         auto bw = numpy_array_to_vector( bandwidth );
         new (&obj) EuclideanSpace( labels, kernel, bw );
     },
-    py::arg("labels"), py::arg("kernel") = GaussianKernel(), py::arg("bandwidth") = std::vector<value>(0), 
-    R"pbdoc(
-        Constructs Euclidean Space.
-        
-        Parameters
-        ----------
-        labels : [strings]
-            labels for dimensions
-        kernel : Kernel
-            Gaussian, Epanechnikov or Box kernel
-        bandwidth : 1d array
-            bandwidths for default kernel
-    )pbdoc")
+    py::arg("labels"), py::arg("kernel") = GaussianKernel(), py::arg("bandwidth") = std::vector<value>(0))
     
     .def( "grid", [](const EuclideanSpace& obj, std::vector<py::array_t<value, py::array::c_style | py::array::forcecast>> & v, py::array_t<bool, py::array::c_style | py::array::forcecast> & valid, py::array_t<bool, py::array::c_style | py::array::forcecast> & selection ) { 
         std::vector<std::vector<value>> vec( v.size() );
@@ -229,6 +232,8 @@ void pybind_space(py::module &m) {
         
     }, py::arg("vectors"), py::arg("valid") = std::vector<bool>(0), py::arg("selection") = std::vector<bool>(0),
     R"pbdoc(
+        grid(vectors, valid, selection) -> Grid
+
         Constructs grid from vectors for select dimensions.
         
         Parameters
@@ -250,7 +255,7 @@ void pybind_space(py::module &m) {
     // CATEGORICAL SPACE CLASS
     py::class_<CategoricalSpace, Space>(m, "CategoricalSpace",
     R"pbdoc(
-        1-dimensional categorical space definition.
+        One-dimensional categorical space definition.
         
         Parameters
         ----------
@@ -262,23 +267,12 @@ void pybind_space(py::module &m) {
             Default category index
             
     )pbdoc")
-    .def( py::init<std::string, std::vector<std::string>, unsigned int>(), py::arg("label"), py::arg("categories"), py::arg("index")=0,
-    R"pbdoc(
-        Constructs Categorical Space.
-        
-        Parameters
-        ----------
-        label : string
-            Label for categorical dimension
-        categories : [ strings ]
-            Category names
-        index : int
-            Default category index
-        
-    )pbdoc" )
+    .def( py::init<std::string, std::vector<std::string>, unsigned int>(), py::arg("label"), py::arg("categories"), py::arg("index")=0)
     
     .def( "grid", [](const CategoricalSpace& obj) { return std::unique_ptr<Grid>( obj.grid() ); },
     R"pbdoc(
+        grid() -> Grid
+
         Constructs grid.
         
         Returns
@@ -296,20 +290,15 @@ void pybind_space(py::module &m) {
         Parameters
         ----------
         spaces : [ Spaces ]
+            list of subspaces
         
     )pbdoc")
-    .def( py::init<std::vector<const Space*>>(), py::arg("spaces"),
-    R"pbdoc(
-        Constructs Multiplicative Space.
-        
-        Parameters
-        ----------
-        spaces : [ Spaces ]
-        
-    )pbdoc"  )
+    .def( py::init<std::vector<const Space*>>(), py::arg("spaces"))
     
     .def( "grid", [](const MultiSpace& obj, std::vector<Grid*> & g) { return std::unique_ptr<Grid>( obj.grid( g ) ); }, py::arg("grids") ,
     R"pbdoc(
+        grid(grids) -> Grid
+        
         Construct grid.
         
         Parameters
@@ -327,7 +316,7 @@ void pybind_space(py::module &m) {
     // CIRCULAR SPACE CLASS
     py::class_<CircularSpace, Space>(m, "CircularSpace",
     R"pbdoc(
-        1-dimensional circular space definition.
+        One-dimensional circular space definition.
         
         Parameters
         ----------
@@ -339,23 +328,12 @@ void pybind_space(py::module &m) {
             Mu for default Von Mises kernel
         
     )pbdoc")
-    .def( py::init<std::string, value, value>(), py::arg("label"), py::arg("kappa")=DEFAULT_KAPPA, py::arg("mu")=DEFAULT_MU,
-    R"pbdoc(
-        Constructs Circular Space.
-        
-        Parameters
-        ----------
-        label : string
-            label for circular dimension
-        kappa : scalar
-            Kappa for default Von Mises kernel
-        mu : scalar
-            Mu for default Von Mises kernel
-        
-    )pbdoc"  )
+    .def( py::init<std::string, value, value>(), py::arg("label"), py::arg("kappa")=DEFAULT_KAPPA, py::arg("mu")=DEFAULT_MU)
     
     .def( "grid", [](const CircularSpace& obj, unsigned int n) { return std::unique_ptr<Grid>( obj.grid(n) ); }, py::arg("n")=DEFAULT_CIRCULAR_GRID_SIZE,
     R"pbdoc(
+        grid(n) -> Grid
+        
         Construct grid.
         
         Parameters
@@ -373,45 +351,14 @@ void pybind_space(py::module &m) {
     // ENCODED SPACE CLASS
     py::class_<EncodedSpace, Space>(m, "EncodedSpace",
     R"pbdoc(
-        1-dimensional encoded space definition.
+        Constructs one-dimensional encoded space definition.
+
+        Their are two call signatures, depending on whether
+        one would like to assign values to each point in the
+        space, or use indices.
         
-        Parameters
-        ----------
-        label : string
-            label for encoded dimension
-        distances : (n,n) array
-            matrix of squared distances
-        bandwidth : scalar
-            Bandwidth for default gaussian kernel
-        
-    )pbdoc")
-    .def( "__init__", [](EncodedSpace & obj, std::string label, py::array_t<value, py::array::c_style | py::array::forcecast> distances, value bandwidth) {
-        auto vec_distances = numpy_array_to_vector( distances );
-        new (&obj) EncodedSpace( label, vec_distances, bandwidth );
-    },
-    py::arg("label"), py::arg("distances"), py::arg("bandwidth")=DEFAULT_ENCODED_BANDWIDTH,
-    R"pbdoc(
-        Constructs Encoded Space.
-        
-        Parameters
-        ----------
-        label : string
-            label for encoded dimension
-        distances : (n,n) array
-            matrix of squared distances
-        bandwidth : scalar
-            Bandwidth for default gaussian kernel
-        
-    )pbdoc"  )
-    
-    .def( "__init__", [](EncodedSpace & obj, std::string label, py::array_t<value, py::array::c_style | py::array::forcecast> points, py::array_t<value, py::array::c_style | py::array::forcecast> distances, value bandwidth) {
-        auto vec_points = numpy_array_to_vector( points );
-        auto vec_distances = numpy_array_to_vector( distances );
-        new (&obj) EncodedSpace( label, vec_points, vec_distances, bandwidth );
-    },
-    py::arg("label"), py::arg("points"), py::arg("distances"), py::arg("bandwidth")=DEFAULT_ENCODED_BANDWIDTH,
-    R"pbdoc(
-        Constructs Encoded Space.
+        .. py:function:: EncodedSpace(label, distances, bandwidth)
+                         EncodedSpace(label, points, distances, bandwidth)
         
         Parameters
         ----------
@@ -424,26 +371,25 @@ void pybind_space(py::module &m) {
         bandwidth : scalar
             Bandwidth for default gaussian kernel
         
-    )pbdoc"  )
+    )pbdoc")
+    .def( "__init__", [](EncodedSpace & obj, std::string label, py::array_t<value, py::array::c_style | py::array::forcecast> distances, value bandwidth) {
+        auto vec_distances = numpy_array_to_vector( distances );
+        new (&obj) EncodedSpace( label, vec_distances, bandwidth );
+    },
+    py::arg("label"), py::arg("distances"), py::arg("bandwidth")=DEFAULT_ENCODED_BANDWIDTH)
+    
+    .def( "__init__", [](EncodedSpace & obj, std::string label, py::array_t<value, py::array::c_style | py::array::forcecast> points, py::array_t<value, py::array::c_style | py::array::forcecast> distances, value bandwidth) {
+        auto vec_points = numpy_array_to_vector( points );
+        auto vec_distances = numpy_array_to_vector( distances );
+        new (&obj) EncodedSpace( label, vec_points, vec_distances, bandwidth );
+    },
+    py::arg("label"), py::arg("points"), py::arg("distances"), py::arg("bandwidth")=DEFAULT_ENCODED_BANDWIDTH)
     
     .def_property_readonly("use_index", &EncodedSpace::use_index,
     R"pbdoc(True if using index internally.)pbdoc")
     
     .def( "grid", [](const EncodedSpace& obj, unsigned int delta) { return std::unique_ptr<Grid>( obj.grid(delta) ); },
-    py::arg("delta")=DEFAULT_ENCODED_GRID_DELTA,
-    R"pbdoc(
-        Constructs grid.
-        
-        Parameters
-        ----------
-        delta : int
-            Sampling interval for grid.
-        
-        Returns
-        -------
-        Grid
-        
-    )pbdoc"  )
+    py::arg("delta")=DEFAULT_ENCODED_GRID_DELTA)
     
     .def( "grid", [](const EncodedSpace& obj, py::array_t<value, py::array::c_style | py::array::forcecast> & v, py::array_t<bool, py::array::c_style | py::array::forcecast> & valid) { 
         
@@ -455,19 +401,32 @@ void pybind_space(py::module &m) {
         
     }, py::arg("vector"), py::arg("valid") = std::vector<bool>(0),
     R"pbdoc(
-        Constructs grid from vector.
-        
+        grid(*args, **kwargs) -> Grid
+
+        Constructs grid.
+
+        .. py:function:: grid(delta)
+                         grid(vector, valid)
+
+            The first syntax constructs a grid with regular spacing as
+            determined by the `delta` argument.
+            The second syntax constructs a grid from a vector of points/indices.
+            Optionally, a boolean vector setting the validity of each
+            grid point can be specified.
+
         Parameters
         ----------
-        vector: 1d array
+        delta : int
+            Sampling interval for grid.
+        vector : 1d array
             a vector of grid points
         valid : 1d boolean array
             For each grid point if it is a valid point or not
-        
+
         Returns
         -------
         Grid
-        
+
     )pbdoc" );
     
 }

@@ -18,6 +18,8 @@ void pybind_kernel(py::module &m) {
         std::string s = out.c_str();
         return s;},
     R"pbdoc(
+        to_yaml() -> str
+
         Represent kernel definition as YAML.
         
         Returns
@@ -31,6 +33,8 @@ void pybind_kernel(py::module &m) {
         return std::unique_ptr<Kernel>( kernel_from_yaml( node ) ); },
     py::arg("string"),
     R"pbdoc(
+        from_yaml(str) -> Kernel
+
         Construct kernel definition from YAML
         
         Parameters
@@ -55,18 +59,7 @@ void pybind_kernel(py::module &m) {
             the probability is set to zero.
             
     )pbdoc")
-    .def(py::init<value>(), py::arg("cutoff")=DEFAULT_GAUSSIAN_CUTOFF,
-    R"pbdoc(
-        Constructs Gaussian kernel.
-        
-        Parameters
-        ----------
-        cutoff : scalar
-            The standard deviation of the gaussian kernel beyond which
-            the probability is set to zero.
-        
-    )pbdoc"
-    );
+    .def(py::init<value>(), py::arg("cutoff")=DEFAULT_GAUSSIAN_CUTOFF);
     
     py::class_<EpanechnikovKernel, Kernel>(m,"EpanechnikovKernel",
     R"pbdoc(

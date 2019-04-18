@@ -34,6 +34,8 @@ void pybind_grid(py::module &m) {
         std::string s = out.c_str();
         return s;},
     R"pbdoc(
+        to_yaml() -> str
+
         Represent grid definition as YAML.
         
         Returns
@@ -47,6 +49,8 @@ void pybind_grid(py::module &m) {
         return std::unique_ptr<Grid>( grid_from_yaml( node ) ); },
     py::arg("string"),
     R"pbdoc(
+        from_yaml(str) -> Grid
+
         Construct grid definition from YAML
         
         Parameters
@@ -63,6 +67,8 @@ void pybind_grid(py::module &m) {
     .def("save_to_yaml", [](const Grid& obj, std::string path) { obj.save_to_yaml( path ); },
     py::arg("path"),
     R"pbdoc(
+        save_to_yaml(path) -> None
+
         Save grid definition to YAML file.
         
         Parameters
@@ -74,6 +80,8 @@ void pybind_grid(py::module &m) {
     
     .def_static("load_from_yaml", [](std::string path) { return std::unique_ptr<Grid>( load_grid_from_yaml(path) ); }, py::arg("path"),
     R"pbdoc(
+        load_from_yaml(path) -> Grid
+
         Load grid definition from file.
         
         Parameters
@@ -136,6 +144,8 @@ void pybind_grid(py::module &m) {
         },
     py::arg("index"),
     R"pbdoc(
+        at_index(index) -> array
+        
         Retrieve grid values at index
         
         Parameters

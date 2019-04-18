@@ -18,18 +18,7 @@ void pybind_mixture(py::module &m) {
             Compression threshold
             
     )pbdoc")
-    .def(py::init<const Space&, value>(), py::arg("space"), py::arg("threshold")=THRESHOLD,
-    R"pbdoc(
-        Constructs empty mixture.
-        
-        Parameters
-        ----------
-        space : Space
-            Description of mixture space.
-        threshold : scalar
-            Compression threshold
-        
-    )pbdoc")
+    .def(py::init<const Space&, value>(), py::arg("space"), py::arg("threshold")=THRESHOLD)
     
     .def_property_readonly("sum_of_weights", &Mixture::sum_of_weights,
     R"pbdoc(Sum of weights of all samples that were added to the density.)pbdoc")
@@ -117,10 +106,28 @@ void pybind_mixture(py::module &m) {
     R"pbdoc(Scale factors of all components.)pbdoc")
     .def("clear", &Mixture::clear, R"pbdoc(Remove all components and reset mixture.)pbdoc")
     
-    .def("save_to_hdf5", &Mixture::save_to_hdf5)
-    
-    .def("saveto_yaml", [](const Mixture& obj, std::string path) { obj.save_to_yaml( path ); }, py::arg("path"),
+    .def("save_to_hdf5", &Mixture::save_to_hdf5,
+    py::arg("filename"), py::arg("flags")=Flags::OpenOrCreate|Flags::Truncate, py::arg("path")="",
     R"pbdoc(
+        save_to_hdf5(filename, flags, path) -> None
+
+        Save mixture to hdf5 file.
+
+        Parameters
+        ----------
+        filename : str
+            path to hdf5 file
+        flags : int
+            flags for file creation
+        path : str
+            path inside hdf5 file
+
+    )pbdoc" )
+    
+    .def("save_to_yaml", [](const Mixture& obj, std::string path) { obj.save_to_yaml( path ); }, py::arg("path"),
+    R"pbdoc(
+        save_to_yaml(path) -> None
+        
         Save mixture to YAML file.
         
         Parameters
@@ -139,6 +146,8 @@ void pybind_mixture(py::module &m) {
         return s;
     },
     R"pbdoc(
+        to_yaml() -> str
+
         Represent mixture as YAML.
         
         Returns
@@ -152,6 +161,8 @@ void pybind_mixture(py::module &m) {
         return Mixture::from_yaml( node );
     }, py::arg("string"),
     R"pbdoc(
+        from_yaml(str)-> Mixture
+
         Create mixture from YAML.
         
         Parameters
@@ -168,6 +179,8 @@ void pybind_mixture(py::module &m) {
     .def_static("load_from_yaml", [](std::string path) { return std::unique_ptr<Mixture>( Mixture::load_from_yaml(path) ); },
     py::arg("path"),
     R"pbdoc(
+        load_from_yaml(path) -> Mixture
+
         Load mixture from file.
         
         Parameters
@@ -184,12 +197,16 @@ void pybind_mixture(py::module &m) {
     .def_static("load_from_hdf5", [](std::string path) { return std::unique_ptr<Mixture>( Mixture::load_from_hdf5(path) ); },
     py::arg("path"),
     R"pbdoc(
+        load_from_hdf5(filename, path) -> Mixture
+
         Load mixture from hdf5 file.
         
         Parameters
         ----------
-        path : string
+        filename : string
             path to hdf5 file
+        path : string
+            path inside hdf5 file
         
         Returns
         -------
@@ -215,6 +232,8 @@ void pybind_mixture(py::module &m) {
         
     }, py::arg("samples"),
     R"pbdoc(
+        add(samples) -> None
+
         Add samples to the mixture.
         
         New mixture components are added at the sample location with the
@@ -246,6 +265,8 @@ void pybind_mixture(py::module &m) {
         
     }, py::arg("samples"), py::arg("random")=true,
     R"pbdoc(
+        merge(samples, random) -> None
+
         Merge samples into the mixture.
         
         New mixture components are added at the sample location with the
@@ -293,21 +314,7 @@ void pybind_mixture(py::module &m) {
         
         return result;
         
-    }, py::arg("samples"),
-    R"pbdoc(
-        Evaluate mixture at samples.
-        
-        Parameters
-        ----------
-        samples : (n,ndim) array
-            Array of samples
-        
-        Returns
-        -------
-        (n,) array
-            Evaluated probabilities at sample locations
-        
-    )pbdoc" )
+    }, py::arg("samples"))
     
     .def("evaluate", [](Mixture &m, Grid & grid)->py::array_t<value> {
         
@@ -336,17 +343,24 @@ void pybind_mixture(py::module &m) {
         
     }, py::arg("grid"),
     R"pbdoc(
-        Evaluate mixture at grid points.
-        
+        evaulate(*args,**kwargs) -> array
+
+        Evaluate mixture at samples.
+
+        .. py:function:: evaluate(samples)
+                         evaluate(grid)
+
         Parameters
         ----------
+        samples : (n,ndim) array
+            Array of samples
         grid : Grid
             grid specification
         
         Returns
         -------
         ndarray
-            Evaluated probabilities at grid locations
+            Evaluated probabilities at sample locations
         
     )pbdoc" )
     
@@ -410,20 +424,7 @@ void pybind_mixture(py::module &m) {
         
         return m.partial( grid );
         
-    }, py::arg("grid"),
-    R"pbdoc(
-        Partially evaluate mixture at grid points for select dimensions.
-        
-        Parameters
-        ----------
-        grid : Grid
-            Grid on subspace of mixture
-        
-        Returns
-        -------
-        PartialMixture
-        
-    )pbdoc" )
+    }, py::arg("grid"))
     
     .def("partialize", [](Mixture &m, py::array_t<value, py::array::c_style | py::array::forcecast> samples, py::array_t<bool, py::array::c_style | py::array::forcecast> selection)->PartialMixture* {
         
@@ -445,10 +446,17 @@ void pybind_mixture(py::module &m) {
         
     }, py::arg("samples"), py::arg("selection"),
     R"pbdoc(
-        Partially evaluate mixture at samples for select dimensions.
-        
+        partialize(*args, **kwargs) -> PartialMixture
+
+        Partially evaluate mixture at grid points for select dimensions.
+
+        .. py:function:: partialize(grid)
+                         partialize(samples, selection)
+
         Parameters
         ----------
+        grid : Grid
+            Grid on subspace of mixture
         samples : (n,nselect) array
             Array of samples
         selection : (ndim,) boolean array
@@ -498,23 +506,7 @@ void pybind_mixture(py::module &m) {
         
         return result;
         
-    }, py::arg("samples"), py::arg("selection"),
-    R"pbdoc(
-        Evaluate marginal at samples for select dimensions.
-        
-        Parameters
-        ----------
-        samples : (n,nselect) array
-            Array of samples
-        selection : (ndim,) boolean array
-            Selected dimensions for marginal evaluation.
-        
-        Returns
-        -------
-        (nsamples,) array
-            Marginal probabilities
-        
-    )pbdoc")
+    }, py::arg("samples"), py::arg("selection"))
     
     .def("marginal", [](Mixture &m, Grid & grid)->py::array_t<value> {
         
@@ -543,10 +535,19 @@ void pybind_mixture(py::module &m) {
         
     }, py::arg("grid"),
     R"pbdoc(
-        Evaluate marginal at grid points for select dimensions.
-        
+        marginal(*args, **kwargs) -> array
+
+        Evaluate marginal at samples for select dimensions.
+
+        .. py:function:: marginal(samples, selection)
+                         marginal(grid)
+
         Parameters
         ----------
+        samples : (n,nselect) array
+            Array of samples
+        selection : (ndim,) boolean array
+            Selected dimensions for marginal evaluation.
         grid : Grid
             Grid on subspace of mixture
         
@@ -593,6 +594,8 @@ void pybind_mixture(py::module &m) {
         
     },
     R"pbdoc(
+        partial_logp() -> array
+
         Retrieve precomputed partial log probabilities.
         
         Returns
@@ -642,6 +645,8 @@ void pybind_mixture(py::module &m) {
         
     }, py::arg("samples"),
     R"pbdoc(
+        complete(samples) -> array
+
         Complete partial probabilities with remaining part of samples.
         
         Parameters
@@ -685,6 +690,8 @@ void pybind_mixture(py::module &m) {
         
     },
     R"pbdoc(
+        marginal() -> array
+        
         Compute marginal probabilities.
         
         Returns

@@ -8,14 +8,14 @@ void pybind_likelihood(py::module &m) {
     R"pbdoc(
         Poisson likelihood class.
         
-        There are three ways to construct this object, depending on
+        There are multiple ways to construct this object, depending on
         whether you have already constructed a Stimulus object and whether events have 
         attributes (e.g. spike amplitude) or not (e.g. when using sorted spikes).
         
-        | PoissonLikelihood( event_space, stimulus_space, grid, stimulus_duration, compression )
-        | PoissonLikelihood( stimulus_space, grid, stimulus_duration, compression )
-        | PoissonLikelihood( event_space, stimulus )
-        | PoissonLikelihood( stimulus )
+        .. py:function:: PoissonLikelihood( event_space, stimulus_space, grid, stimulus_duration, compression )
+                         PoissonLikelihood( stimulus_space, grid, stimulus_duration, compression )
+                         PoissonLikelihood( event_space, stimulus )
+                         PoissonLikelihood( stimulus )
         
         Parameters
         ----------
@@ -79,6 +79,8 @@ void pybind_likelihood(py::module &m) {
         return s;
     }, py::arg("save_stimulus")=true,
     R"pbdoc(
+        to_yaml(save_stimulus) -> str
+
         Represent stimulus occupancy as YAML.
         
         Parameters
@@ -96,6 +98,8 @@ void pybind_likelihood(py::module &m) {
     .def("save_to_yaml", [](const PoissonLikelihood& obj, std::string path, bool b) { obj.save_to_yaml( path, b ); },
     py::arg("path"), py::arg("save_stimulus")=true,
     R"pbdoc(
+        save_to_yaml(path, save-stimulus) -> None
+
         Save Poisson likelihood to YAML file.
         
         Parameters
@@ -109,11 +113,32 @@ void pybind_likelihood(py::module &m) {
     )pbdoc")
     
     .def("save_to_hdf5", &PoissonLikelihood::save_to_hdf5,
-    py::arg("filename"), py::arg("save_stimulus")=true, py::arg("flags")=19, py::arg("path")="")
+    py::arg("filename"), py::arg("save_stimulus")=true, py::arg("flags")=Flags::OpenOrCreate|Flags::Truncate, 
+    py::arg("path")="",
+    R"pbdoc(
+        save_to_hdf5(filename, save_stimulus, flags, path) -> None
+
+        Save stimulus occupancy to hdf5 file.
+
+        Parameters
+        ----------
+        filename : str
+            path to hdf5 file
+        save_stimulus : bool
+            Save stimulus occupancy distribution to hdf5 file in addition
+            to event distribution.
+        flags : int
+            flags for file creation
+        path : str
+            path inside hdf5 file
+
+    )pbdoc" )
     
     .def_static("load_from_hdf5", [](std::string filename, std::string path, std::shared_ptr<StimulusOccupancy> stimulus) { return std::shared_ptr<PoissonLikelihood>( PoissonLikelihood::load_from_hdf5(filename, path, stimulus) ); },
     py::arg("filename"), py::arg("path")="", py::arg("stimulus")=nullptr,
     R"pbdoc(
+        load_from_hdf5(path) -> PoissonLikelihood
+
         Load poisson likelihood from hdf5 file.
         
         Parameters
@@ -145,6 +170,8 @@ void pybind_likelihood(py::module &m) {
         },
     py::arg("events"), py::arg("repetitions")=1,
     R"pbdoc(
+        add_events(events, repetitions) -> None
+
         Merge new events into event distribution.
         
         Parameters
@@ -263,6 +290,8 @@ void pybind_likelihood(py::module &m) {
         },
     py::arg("events"), py::arg("delta"),
     R"pbdoc(
+        logL(events, delta) -> array
+
         Evaluate log likelihood on grid given observed events.
         
         Parameters
@@ -317,6 +346,8 @@ void pybind_likelihood(py::module &m) {
         },
     py::arg("events"), py::arg("delta"),
     R"pbdoc(
+        likelihood(events, delta) -> array
+
         Evaluate likelihood on grid given observed events.
         
         Parameters
@@ -371,6 +402,8 @@ void pybind_likelihood(py::module &m) {
         },
     py::arg("events"),
     R"pbdoc(
+        event_prob(events) -> array
+
         Probability of observing events evaluated on grid.
         
         Parameters
@@ -423,6 +456,8 @@ void pybind_likelihood(py::module &m) {
         },
     py::arg("events"),
     R"pbdoc(
+        event_logp(events) -> array
+
         Log probability of observing events evaluated on grid.
         
         Parameters

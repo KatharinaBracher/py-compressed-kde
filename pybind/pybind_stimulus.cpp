@@ -49,6 +49,8 @@ void pybind_stimulus(py::module &m) {
         return s;
     },
     R"pbdoc(
+        to_yaml() -> str
+
         Represent stimulus occupancy as YAML.
         
         Returns
@@ -59,6 +61,8 @@ void pybind_stimulus(py::module &m) {
     
     .def("save_to_yaml", [](const StimulusOccupancy& obj, std::string path) { obj.save_to_yaml( path ); }, py::arg("path"),
     R"pbdoc(
+        save_to_yaml(path) -> None
+
         Save stimulus occupancy to YAML file.
         
         Parameters
@@ -69,17 +73,36 @@ void pybind_stimulus(py::module &m) {
     )pbdoc")
     
     .def("save_to_hdf5", &StimulusOccupancy::save_to_hdf5,
-    py::arg("filename"), py::arg("flags")=19, py::arg("path")="")
+    py::arg("filename"), py::arg("flags")=Flags::OpenOrCreate|Flags::Truncate, py::arg("path")="",
+    R"pbdoc(
+        save_to_hdf5(filename, flags, path) -> None
+
+        Save stimulus occupancy to hdf5 file.
+
+        Parameters
+        ----------
+        filename : str
+            path to hdf5 file
+        flags : int
+            flags for file creation
+        path : str
+            path inside hdf5 file
+
+    )pbdoc" )
     
     .def_static("load_from_hdf5", [](std::string filename, std::string path) { return std::shared_ptr<StimulusOccupancy>(StimulusOccupancy::load_from_hdf5(filename,path)); },
     py::arg("filename"), py::arg("path")="",
     R"pbdoc(
+        load_from_hdf5(filename, path) -> StimulusOccupancy
+
         Load stimulus occupancy from hdf5 file.
         
         Parameters
         ----------
-        path : string
+        filename : str
             path to hdf5 file
+        path : str
+            path inside hdf5 file
         
         Returns
         -------
@@ -105,6 +128,8 @@ void pybind_stimulus(py::module &m) {
         }, 
     py::arg("stimuli"), py::arg("repetitions")=1,
     R"pbdoc(
+        add_stimuli(stimuli, repetitions) -> None
+        
         Merge new stimuli into distribution.
         
         Parameters
@@ -143,6 +168,8 @@ void pybind_stimulus(py::module &m) {
         
         },
     R"pbdoc(
+        occupancy() -> array
+
         Evaluate stimulus occupancy on grid.
         
         Returns
@@ -178,6 +205,8 @@ void pybind_stimulus(py::module &m) {
         
         },
     R"pbdoc(
+        logp() -> array
+
         Evaluate log probability of stimulus distribution on grid.
         
         Returns
@@ -213,6 +242,8 @@ void pybind_stimulus(py::module &m) {
         
         },
     R"pbdoc(
+        prob() -> array
+        
         Evaluate probability of stimulus distribution on grid.
         
         Returns

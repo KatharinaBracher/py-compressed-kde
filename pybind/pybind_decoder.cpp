@@ -13,17 +13,17 @@ void pybind_decoder(py::module &m) {
         depending on whether you would like to decode over multiple stimulus spaces
         or not.
         
-        | Decoder( likelihoods, prior )
-        | Decoder( likelihoods, priors )
+        .. py:function:: Decoder( likelihoods, prior )
+                         Decoder( likelihoods, priors )
         
-        In the first case, one passes a list of likelihood objects that all share the
-        same stimulus space and (optionally) an array with prior probabilities for
-        the grid points in the stimulus space.
-        
-        In the second case, one passes a nested list of likelihoods, where the outer
-        list represents the data sources (e.g. individual tetrodes) and the inner lists
-        represent multiple stimulus spaces one would like to decode over. The (optional)
-        prior probabilities for each stimulus space are provided as a list of arrays.
+            In the first syntax, one passes a list of likelihood objects that all share the
+            same stimulus space and (optionally) an array with prior probabilities for
+            the grid points in the stimulus space.
+
+            In the second syntax, one passes a nested list of likelihoods, where the outer
+            list represents the data sources (e.g. individual tetrodes) and the inner lists
+            represent multiple stimulus spaces one would like to decode over. The (optional)
+            prior probabilities for each stimulus space are provided as a list of arrays.
         
         Parameters
         ----------
@@ -49,6 +49,8 @@ void pybind_decoder(py::module &m) {
     
     .def("grid_shape", &Decoder::grid_shape, py::arg("index")=0,
     R"pbdoc(
+        grid_shape(index) -> [int]
+        
         Grid size.
         
         Parameters
@@ -67,6 +69,8 @@ void pybind_decoder(py::module &m) {
     
     .def("grid_size", &Decoder::grid_size, py::arg("index")=0,
     R"pbdoc(
+        grid_size(index) -> int
+
         Grid size.
         
         Parameters
@@ -88,6 +92,8 @@ void pybind_decoder(py::module &m) {
     
     .def("grid", &Decoder::grid, py::return_value_policy::reference_internal, py::arg("index")=0,
     R"pbdoc(
+        grid(index)-> Grid
+
         Get stimulus space grid.
         
         Parameters
@@ -103,6 +109,8 @@ void pybind_decoder(py::module &m) {
     
     .def("stimulus", &Decoder::stimulus, py::arg("index")=0,
     R"pbdoc(
+        stimulus(index) -> Stimulus
+
         Get stimulus space.
         
         Parameters
@@ -118,6 +126,8 @@ void pybind_decoder(py::module &m) {
     
     .def("likelihood", &Decoder::likelihood, py::arg("source"), py::arg("index")=0,
     R"pbdoc(
+        likelihood(source, index) -> PoissonLikelihood
+
         Get likelihood.
         
         Parameters
@@ -135,6 +145,8 @@ void pybind_decoder(py::module &m) {
     
     .def("enable_source", &Decoder::enable_source, py::arg("source"),
     R"pbdoc(
+        enable_source(source) -> None
+
         Enable source.
         
         Parameters
@@ -146,6 +158,8 @@ void pybind_decoder(py::module &m) {
     
     .def("disable_source", &Decoder::disable_source, py::arg("source"),
     R"pbdoc(
+        disable_source(source) -> None
+
         Disable source.
         
         Parameters
@@ -160,6 +174,8 @@ void pybind_decoder(py::module &m) {
     
     .def("enable_one_source", &Decoder::enable_one_source, py::arg("source"),
     R"pbdoc(
+        enable_one_source(source) -> None
+
         Enable single source and disable all others.
         
         Parameters
@@ -171,6 +187,8 @@ void pybind_decoder(py::module &m) {
     
     .def("enable_sources", &Decoder::enable_sources, py::arg("state"),
     R"pbdoc(
+        enable_sources(state) -> None
+
         Set enable state of sources.
         
         Parameters
@@ -181,12 +199,29 @@ void pybind_decoder(py::module &m) {
     )pbdoc")
     
     .def("save_to_hdf5", &Decoder::save_to_hdf5,
-    py::arg("filename"), py::arg("flags")=19, py::arg("path")="")
-    
+    py::arg("filename"), py::arg("flags")=Flags::OpenOrCreate|Flags::Truncate, py::arg("path")="",
+    R"pbdoc(
+        save_to_hdf5(filename, flags, path) -> None
+
+        Save decoder to hdf5 file.
+
+        Parameters
+        ----------
+        filename : str
+            path to hdf5 file
+        flags : int
+            flags for file creation
+        path : str
+            path inside hdf5 file
+
+    )pbdoc" )
+
     .def_static("load_from_hdf5", &Decoder::load_from_hdf5,
     py::arg("filename"), py::arg("path")="",
     R"pbdoc(
-        Load poisson likelihood from hdf5 file.
+        load_from_hdf5(path) -> Decoder
+
+        Load decoder from hdf5 file.
         
         Parameters
         ----------
@@ -195,7 +230,7 @@ void pybind_decoder(py::module &m) {
         
         Returns
         -------
-        PoissonLikelihood
+        Decoder
         
     )pbdoc" )
     
@@ -246,6 +281,8 @@ void pybind_decoder(py::module &m) {
         
     }, py::arg("events"), py::arg("delta"), py::arg("normalize")=true,
     R"pbdoc(
+        decode(events, delta, normalize) -> [array,]
+
         Compute posterior probability distribution.
         
         Parameters
@@ -299,6 +336,8 @@ void pybind_decoder(py::module &m) {
         
     }, py::arg("events"), py::arg("delta"), py::arg("index")=0, py::arg("normalize")=true,
     R"pbdoc(
+        decode_single(events, delta, index, normalize)-> array
+        
         Compute posterior probability distribution for single stimulus space.
         
         Parameters
