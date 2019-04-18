@@ -459,7 +459,7 @@ void pybind_space(py::module &m) {
         
         Parameters
         ----------
-        vector: 1d array
+        vector : 1d array
             a vector of grid points
         valid : 1d boolean array
             For each grid point if it is a valid point or not
