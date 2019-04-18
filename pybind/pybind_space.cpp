@@ -203,7 +203,7 @@ void pybind_space(py::module &m) {
         
         Parameters
         ----------
-        labels: [strings]
+        labels : [strings]
             labels for dimensions
         kernel : Kernel
             Gaussian, Epanechnikov or Box kernel
