@@ -7,11 +7,15 @@ source:
 
 build:
   number: 0
+  script: cd python && python setup.py install --single-version-externally-managed --record=record.txt
+  #script: "cd python && {{ PYTHON }} -m pip install . --no-deps -vvv"
 
 requirements:
   build:
-    - python {{ python }}
-    - setuptools
+    - {{ compiler('cxx') }}
+  host:
+    - python
+    - pip
     - pybind11>=2.2
     - yaml-cpp
     - hdf5
