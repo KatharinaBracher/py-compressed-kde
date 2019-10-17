@@ -1,6 +1,6 @@
 package:
   name: py-compressed-decoder
-  version: "0.2.0"
+  version: {{ GIT_DESCRIBE_TAG }}
 
 source:
   git_url: ../..
