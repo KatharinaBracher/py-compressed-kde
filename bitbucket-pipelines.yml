@@ -31,4 +31,4 @@ pipelines:
              - git config --global user.name marinechaput
              - git add .
              - git commit -q -m "update version"
-             - git push https://$BITBUCKET_USER:$GIT_PWD@bitbucket.org/kloostermannerflab/fklab-python-doc.git master
+             - git push https://$BITBUCKET_USER:$BITBUCKET_PWD@bitbucket.org/kloostermannerflab/fklab-python-doc.git master
