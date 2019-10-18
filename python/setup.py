@@ -39,7 +39,7 @@ extensions = [
     Extension(
         "fklab.decode.compressed_kde",
         sources = sources,
-        libraries = ['yaml-cpp==0.6.2', 'hdf5'],
+        libraries = ['yaml-cpp', 'hdf5'],
         include_dirs = [os.path.abspath('../src'), os.path.abspath('../ext/HighFive-1.4/include'), get_config_var('INCLUDEDIR'), get_pybind_include(), get_pybind_include(user=True)],
         language = "c++",
         extra_compile_args = ['-std=c++14', '-O3'],
