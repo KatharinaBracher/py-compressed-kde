@@ -3,8 +3,8 @@
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-#image: fklab/pybuild:latest
-image: continuumio/miniconda3:latest
+image: fklab/pybuild:latest
+#image: continuumio/miniconda3:latest
 
 pipelines:
 #script:
@@ -18,10 +18,9 @@ pipelines:
             - git add .
             - git commit -m "update version"
             - git push origin HEAD:master
-            - conda install anaconda-client conda-build
             - anaconda login --username $ANACONDA_USER --password $ANACONDA_PWD
             - conda config --set anaconda_upload yes
-            - conda build python/recipe --user KloostermanLab --channel conda-forge
+            - conda build python/recipe --user KloostermanLab
       - step:
           name: trigger the doc repository to re-build the doc
           script :
