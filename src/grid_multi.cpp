@@ -14,13 +14,61 @@ std::vector<long unsigned int> shape_from_grids( const std::vector<Grid*> & grid
     for (auto & k : grids) {
         shape.insert( std::end(shape), k->shape().cbegin(), k->shape().cend() );
     }
+
     return shape;
+}
+
+const std::vector<bool> valid_from_grids(const std::vector<Grid*> & grids,
+    const std::vector<bool> & valid) {
+
+    if (valid.size()>0) {
+        return valid;
+    }
+
+    auto shape = shape_from_grids(grids);
+    unsigned int D = grids.size();
+    unsigned int N = 1;
+
+    for (auto & n : shape) {
+        N *= n;
+    }
+
+    std::vector<bool> result(N, true);
+
+    std::vector<bool> has_valid_vector(D, false);
+    std::vector<unsigned int> cursor(D,0);
+    std::vector<unsigned int> end(D);
+
+    for (unsigned int d=0;d<D;++d) {
+        end[d] = grids[d]->size();
+        has_valid_vector[d] = (grids[d]->ninvalid()>0);
+    }
+
+    for (unsigned int k=0; k<N; ++k) {
+        for (unsigned int d=0; d<D; ++d) {
+            if (has_valid_vector[d]) {
+                result[k] = result[k] && grids[d]->valid()[cursor[d]];
+            }
+        }
+               
+        for (int d=D-1; d>=0; --d) {
+            
+            ++cursor[d];
+            if (cursor[d]>=end[d]) {
+                cursor[d] = 0;
+            } else {
+                break;
+            }
+        }
+    }
+
+    return result;
 }
 
 // constructor
 MultiGrid::MultiGrid( const std::vector<Grid*> & grids, const std::vector<bool> & valid )
     : GridBase<MultiGrid>( "multi", space_from_grids( grids ), 
-        shape_from_grids( grids ), valid ) {
+        shape_from_grids( grids ), valid_from_grids(grids, valid) ) {
     
     for (auto & k : grids) {
         if (k->klass()=="multi") {

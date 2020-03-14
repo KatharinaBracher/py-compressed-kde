@@ -21,6 +21,69 @@ void pybind_grid(py::module &m) {
     R"pbdoc(
         Dimensionality of grid.
     )pbdoc")
+    .def_property("valid",
+        [](Grid &grid)-> py::array_t<bool> {
+            
+            // short cut if empty array
+            if (grid.valid().size()==0) {
+                // create output array<value> of same shape
+                auto result = py::array( py::buffer_info(
+                    nullptr,
+                    sizeof(bool),
+                    py::format_descriptor<bool>::value,
+                    1,
+                    {0},
+                    {sizeof(bool)})
+                );
+
+                return result;
+            }
+
+            std::vector<long unsigned int> strides(grid.ndim(), sizeof(bool));
+            for (int k=grid.ndim()-2; k>=0; --k) {
+                strides[k] = strides[k+1] * grid.shape()[k+1];
+            }
+
+            // create output array<value> of same shape
+            auto result = py::array( py::buffer_info(
+                nullptr,
+                sizeof(bool),
+                py::format_descriptor<bool>::value,
+                grid.ndim(),
+                grid.shape(),
+                strides
+            ));
+
+           auto result_ptr = (bool*) result.request().ptr;
+            
+            for (auto v : grid.valid()) {
+                *result_ptr++ = v;
+            }
+            
+            return result;
+
+        },
+        [](Grid &grid, py::array_t<bool, py::array::c_style | py::array::forcecast> valid) {
+            // check that shape of input equals the grid shape
+            auto buf = valid.request();
+            auto gridshape = grid.shape();
+            auto bufshape = buf.shape;
+            if (buf.size>0 &&
+                    (buf.ndim!=grid.ndim() ||
+                    !std::equal(gridshape.begin(), gridshape.end(), bufshape.begin())
+                    )
+                ) {
+                throw std::runtime_error("Shape of input array does not match grid shape.");
+            }
+
+            // flatten input to vector
+            auto v = numpy_array_to_vector(valid);
+
+            grid.set_valid(v);
+        },
+    R"pbdoc(
+        Validity of grid points.
+    )pbdoc")
     .def_property_readonly("klass", &Grid::klass,
     R"pbdoc(
         Grid type.

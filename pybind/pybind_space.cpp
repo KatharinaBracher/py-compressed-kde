@@ -295,7 +295,26 @@ void pybind_space(py::module &m) {
     )pbdoc")
     .def( py::init<std::vector<const Space*>>(), py::arg("spaces"))
     
-    .def( "grid", [](const MultiSpace& obj, std::vector<Grid*> & g) { return std::unique_ptr<Grid>( obj.grid( g ) ); }, py::arg("grids") ,
+    .def( "grid", [](const MultiSpace& obj, std::vector<Grid*> & g, py::array_t<bool, py::array::c_style | py::array::forcecast> & valid) {
+            
+            // check that shape of input equals the grid shape
+            auto gridshape = shape_from_grids(g);
+            auto buf = valid.request();
+            auto bufshape = buf.shape;
+            if (buf.size>0 &&
+                    (bufshape.size()!=gridshape.size() ||
+                    !std::equal(gridshape.begin(), gridshape.end(), bufshape.begin())
+                    )
+                ) {
+                throw std::runtime_error("Shape of input array does not match grid shape.");
+            }
+
+            auto vec_valid = numpy_array_to_vector( valid );
+            
+            return std::unique_ptr<Grid>( obj.grid( g, vec_valid ) );
+        },
+        py::arg("grids"),
+        py::arg("valid")=std::vector<bool>(0),
     R"pbdoc(
         grid(grids) -> Grid
         
@@ -305,6 +324,8 @@ void pybind_space(py::module &m) {
         ----------
         grids : [ Grids ]
             Grids for subspaces
+        valid : array
+            Optional array indicating which grid points are valid.
         
         Returns
         -------

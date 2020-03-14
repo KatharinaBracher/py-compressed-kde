@@ -6,19 +6,11 @@ Grid::Grid( std::string klass, const SpaceSpecification & space,
     std::vector<long unsigned int> shape, const std::vector<bool> & valid )
     : klass_(klass), spec_(space), shape_(shape), valid_(valid) {
 
-    if (valid_.size()!=0 && valid_.size()!=size()) {
-        throw std::runtime_error("Incompatible size of valid vector.");
-    }
-
     if (shape.size()!=1 && shape.size()!=ndim()) {
         throw std::runtime_error("Incompatible shape vector.");
     }
     
-    if (valid_.empty()) {
-        ninvalid_ = 0;
-    } else {
-        ninvalid_ = std::count( valid_.cbegin(), valid_.cend(), false );
-    }
+    set_valid(valid);
     
 }
 
@@ -38,6 +30,22 @@ unsigned int Grid::size() const {
 unsigned int Grid::ndim() const { return spec_.ndim(); }
 
 const std::vector<bool> & Grid::valid() const { return valid_; }
+
+void Grid::set_valid(const std::vector<bool> & valid) {
+    if (valid.size()!=0 && valid.size()!=size()) {
+        throw std::runtime_error("Incompatible size of valid vector.");
+    }
+
+    valid_ = valid;
+
+    if (valid_.empty()) {
+        ninvalid_ = 0;
+    } else {
+        ninvalid_ = std::count( valid_.cbegin(), valid_.cend(), false );
+    }
+
+}
+
 unsigned int Grid::ninvalid() const { return ninvalid_; }
 unsigned int Grid::nvalid() const { return size()-ninvalid(); }
 

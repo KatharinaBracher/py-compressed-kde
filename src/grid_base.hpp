@@ -37,6 +37,7 @@ public:
     unsigned int ndim() const;
     
     const std::vector<bool> & valid() const;
+    void set_valid(const std::vector<bool> & valid);
     unsigned int ninvalid() const;
     unsigned int nvalid() const;
     
