@@ -5,6 +5,7 @@
 static const value DEFAULT_KAPPA = 5.;
 static const value DEFAULT_MU = 0.;
 static const unsigned int DEFAULT_CIRCULAR_GRID_SIZE = 24;
+static const value DEFAULT_CIRCULAR_GRID_OFFSET = 0.;
 
 class CircularSpace : public SpaceBase<CircularSpace> {
 public:
@@ -15,7 +16,7 @@ public:
     Component make_kernel( value kappa, value mu) const;
     
     // grid construction
-    Grid * grid(unsigned int n=DEFAULT_CIRCULAR_GRID_SIZE) const;
+    Grid * grid(unsigned int n=DEFAULT_CIRCULAR_GRID_SIZE, value offset=DEFAULT_CIRCULAR_GRID_OFFSET) const;
     
     // methods
     virtual value compute_scale_factor( value * bw, bool log = false ) const override;

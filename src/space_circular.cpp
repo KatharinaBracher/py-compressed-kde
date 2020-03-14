@@ -21,11 +21,11 @@ Component CircularSpace::make_kernel(value kappa, value mu) const {
 }
 
 // grid construction
-Grid * CircularSpace::grid(unsigned int n) const {
+Grid * CircularSpace::grid(unsigned int n, value offset) const {
     
     std::vector<value> v(n);
     for (unsigned int k=0; k<n; ++k) {
-        v[k] = ( (2*M_PI*k) / n );
+        v[k] = ( (2*M_PI*k) / n ) + offset;
     }
     
     return new VectorGrid( { v }, specification(), {} );
