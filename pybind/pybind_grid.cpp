@@ -103,25 +103,28 @@ void pybind_grid(py::module &m) {
         
         // check if index is 2d array of size (n,ndim)
         // or 1d array of size (ndim,)
+        // or if ndim=1, 1d array of size (n,)
         auto buf = index.request();
         
-        if (buf.ndim==1 && buf.shape[0]==ndim) {
+        if (ndim==1 && buf.ndim==1) {
+            npoints = buf.shape[0];
+        } else if (buf.ndim==1 && buf.shape[0]==ndim) {
             npoints = 1;
-            strides.push_back(sizeof(value));
         } else if (buf.ndim==2 && buf.shape[1]==ndim) {
             npoints = buf.shape[0];
             strides.push_back(sizeof(value)*ndim);
-            strides.push_back(sizeof(value));
         } else {
             throw std::runtime_error("Expected a (N," + std::to_string(ndim) + ") 2D array of samples.");
         }
         
+        strides.push_back(sizeof(value));
+
         // create output array<value> of same shape
         auto result = py::array( py::buffer_info(
             nullptr,
             sizeof(value),
             py::format_descriptor<value>::value,
-            1,
+            buf.ndim,
             buf.shape,
             strides
         ));
@@ -157,6 +160,62 @@ void pybind_grid(py::module &m) {
         -------
         array
             grid values at index
+        
+    )pbdoc" )
+
+    .def("points", [](Grid & obj) {
+        
+        std::vector<unsigned int> indices(obj.size()*obj.ndim(), 0);
+        std::vector<long unsigned int> strides(obj.ndim(), 1);
+        
+        for (unsigned int d=obj.ndim()-1; d>0; --d) {
+            strides[d-1] = strides[d]*obj.shape()[d];
+        }
+
+        auto cursor = indices.begin();
+
+        for (long unsigned int k=0; k<obj.size(); ++k) {
+            for (unsigned int d=0; d<obj.ndim(); ++d) {
+                *cursor = (k / strides[d]) % obj.shape()[d];
+                cursor++;
+            }
+        }
+        
+        // create output array<value>
+        auto result = py::array( py::buffer_info(
+            nullptr,
+            sizeof(value),
+            py::format_descriptor<value>::value,
+            2,
+            {obj.size(), obj.ndim()},
+            {sizeof(value)*obj.ndim(), sizeof(value)}
+        ));
+        
+        auto result_buf = result.request();
+        
+        // repeatedly call obj.at_index( in, out )
+        auto p_in = &indices[0];
+        value *p_out = (value *) result_buf.ptr;
+        
+        for (unsigned int k=0; k<obj.size(); ++k) {
+            obj.at_index( p_in, p_out );
+            p_in += obj.ndim();
+            p_out += obj.ndim();
+        }
+        
+        // return output array
+        return result;
+        
+        },
+    R"pbdoc(
+        points -> array
+        
+        Retrieve all grid values
+        
+        Returns
+        -------
+        array : (n, ndim) array
+            grid values
         
     )pbdoc" );
         
