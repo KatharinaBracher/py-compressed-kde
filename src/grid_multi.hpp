@@ -4,6 +4,8 @@
 
 SpaceSpecification space_from_grids( const std::vector<Grid*> & grids );
 std::vector<long unsigned int> shape_from_grids( const std::vector<Grid*> & grids );
+const std::vector<bool> valid_from_grids(const std::vector<Grid*> & grids,
+    const std::vector<bool> & valid);
 
 class MultiGrid : public GridBase<MultiGrid> {
 public:
