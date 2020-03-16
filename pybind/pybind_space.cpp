@@ -351,16 +351,22 @@ void pybind_space(py::module &m) {
     )pbdoc")
     .def( py::init<std::string, value, value>(), py::arg("label"), py::arg("kappa")=DEFAULT_KAPPA, py::arg("mu")=DEFAULT_MU)
     
-    .def( "grid", [](const CircularSpace& obj, unsigned int n) { return std::unique_ptr<Grid>( obj.grid(n) ); }, py::arg("n")=DEFAULT_CIRCULAR_GRID_SIZE,
+    .def( "grid", [](const CircularSpace& obj, unsigned int n, value offset) {
+        return std::unique_ptr<Grid>( obj.grid(n, offset) );
+        }, 
+        py::arg("n")=DEFAULT_CIRCULAR_GRID_SIZE, 
+        py::arg("offset")=DEFAULT_CIRCULAR_GRID_OFFSET,
     R"pbdoc(
-        grid(n) -> Grid
+        grid(n, offset) -> Grid
         
-        Construct grid.
+        Construct circular grid.
         
         Parameters
         ----------
         n : int
             number of points in circular grid
+        offset : float
+            offset applied to grid values
         
         Returns
         -------
