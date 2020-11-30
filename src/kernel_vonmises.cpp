@@ -1,5 +1,5 @@
 #include "kernel_vonmises.hpp"
-#include <boost/math/special_functions/bessel.hpp>
+//#include <boost/math/special_functions/bessel.hpp>
 #include <cmath>
 
 value vonmises_scale_factor( value kappa, bool log ) {
@@ -14,9 +14,9 @@ value vonmises_scale_factor( value kappa, bool log ) {
         }
     } else {
         if (log) {
-            s = -0.5 * fastlog( 2. * M_PI * boost::math::cyl_bessel_i( 0., kappa )); 
+            s = -0.5 * fastlog( 2. * M_PI *std::cyl_bessel_i( 0., kappa )); 
         } else {
-            s = 1. / (2. * M_PI * boost::math::cyl_bessel_i( 0., kappa )); 
+            s = 1. / (2. * M_PI * std::cyl_bessel_i( 0., kappa )); 
         }
     }
     

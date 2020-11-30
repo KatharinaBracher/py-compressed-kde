@@ -2,13 +2,24 @@ cmake_minimum_required(VERSION 2.8)
 
 ENABLE_LANGUAGE(CXX)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wunused -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall -Wunused -std=c++17 -fPIC")
 
 option(BUILD_SHARED_LIBS "Build shared library" ON)
 
 project(DECODER)
 
-find_package( YAML-CPP REQUIRED )
+include(FetchContent)
+FetchContent_Declare(
+		yaml-cpp
+		GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+		GIT_SHALLOW	ON
+		GIT_TAG yaml-cpp-0.6.3
+    )
+    
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "disable yaml tests")
+message(STATUS "Populating yaml-cpp...")
+FetchContent_MakeAvailable(yaml-cpp)
+message(STATUS "Done.")
 find_package(HDF5 REQUIRED)
 
 include_directories( ${HDF5_INCLUDE_DIRS} )
