@@ -146,6 +146,7 @@ void PoissonLikelihood::add_events( const value * events, unsigned int n,
 
 void PoissonLikelihood::precompute() { 
     
+    logp_stimulus_.assign( stimulus_grid_->size(), 0. );
     stimulus_distribution_->prob( logp_stimulus_ );
     
     //if (rate_offset_>0) {
@@ -156,8 +157,7 @@ void PoissonLikelihood::precompute() {
     
     p_event_.reset( new PartialMixture( event_distribution_.get(), *stimulus_grid_ ) );
     
-    event_rate_.resize( stimulus_grid_->size() );
-    
+    event_rate_.assign(stimulus_grid_->size(), 0.);
     p_event_->marginal( event_rate_.data() );
     
     std::transform( event_rate_.begin(), event_rate_.end(), logp_stimulus_.begin(), event_rate_.begin(), [](const value & a, const value & b) {return a/b;} );

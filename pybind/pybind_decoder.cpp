@@ -252,7 +252,7 @@ void pybind_decoder(py::module &m) {
                 nullptr,
                 sizeof(value),
                 py::format_descriptor<value>::value,
-                1,
+                strides.size(),
                 obj.grid_shape(k),
                 strides
             ));
@@ -311,7 +311,7 @@ void pybind_decoder(py::module &m) {
             nullptr,
             sizeof(value),
             py::format_descriptor<value>::value,
-            1,
+            strides.size(),
             obj.grid_shape(index),
             strides
         ));
