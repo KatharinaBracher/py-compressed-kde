@@ -155,7 +155,7 @@ void pybind_space(py::module &m) {
             nullptr,
             sizeof(value),
             py::format_descriptor<value>::value,
-            1,
+            bufx.shape.size(),
             bufx.shape,
             bufx.strides
         ));
