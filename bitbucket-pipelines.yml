@@ -20,8 +20,7 @@ pipelines:
             - git push origin HEAD:master
             - anaconda login --username $ANACONDA_USER --password $ANACONDA_PWD
             - conda config --set anaconda_upload yes
-            - conda upgrade -c conda-forge --all
-            - conda build python/recipe --user KloostermanLab
+            - conda build python/recipe --user KloostermanLab -c conda-forge
       - step:
           name: trigger the doc repository to re-build the doc
           script :
