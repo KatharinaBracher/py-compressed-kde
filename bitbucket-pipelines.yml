@@ -22,13 +22,13 @@ pipelines:
             - conda config --set anaconda_upload yes
             - conda build python/recipe --user KloostermanLab -c conda-forge
       - step:
-          name: trigger the doc repository to re-build the doc
+          name: trigger the docs repository to re-build the docs
           script :
-             - git clone --depth 1 https://$BITBUCKET_USER:$GIT_PWD@bitbucket.org/kloostermannerflab/fklab-python-doc.git
-             - echo $BITBUCKET_TAG >> fklab-python-doc/source/py_compressed_decoder_version.rst
-             - cd fklab-python-doc
+             - git clone --depth 1 https://$BITBUCKET_USER:$GIT_PWD@bitbucket.org/kloostermannerflab/fklab-python-docs.git
+             - echo $BITBUCKET_TAG >> fklab-python-docs/source/py_compressed_decoder_version.rst
+             - cd fklab-python-docs
              - git config --global user.email marine.chaput@nerf.be
              - git config --global user.name marinechaput
              - git add .
              - git commit -q -m "update version"
-             - git push https://$BITBUCKET_USER:$BITBUCKET_PWD@bitbucket.org/kloostermannerflab/fklab-python-doc.git master
+             - git push https://$BITBUCKET_USER:$BITBUCKET_PWD@bitbucket.org/kloostermannerflab/fklab-python-docs.git master

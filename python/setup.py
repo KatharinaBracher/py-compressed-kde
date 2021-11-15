@@ -37,10 +37,11 @@ sources = glob.glob(os.path.abspath('../pybind/*.cpp')) + glob.glob(os.path.absp
 
 extensions = [
     Extension(
-        "fklab.decode.compressed_kde",
+        "compressed_kde.compressed_kde",
         sources = sources,
         libraries = ['yaml-cpp', 'hdf5'],
-        include_dirs = [os.path.abspath('../src'), os.path.abspath('../ext/HighFive-1.4/include'), get_config_var('INCLUDEDIR'), get_pybind_include(), get_pybind_include(user=True)],
+        include_dirs = [os.path.abspath('../src'), os.path.abspath('../ext/HighFive-1.4/include'),
+                        get_config_var('INCLUDEDIR'), get_pybind_include(), get_pybind_include(user=True)],
         language = "c++",
         extra_compile_args = ['-std=c++17', '-O3'],
     )
@@ -48,7 +49,7 @@ extensions = [
 
 import re
 
-VERSIONFILE = "fklab/_version.py"
+VERSIONFILE = "_version.py"
 verstrline = open(VERSIONFILE, "rt").read()
 VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
 mo = re.search(VSRE, verstrline, re.M)
@@ -59,11 +60,12 @@ else:
 
 
 setup(
-    name = "py-compressed-decoder",
+    name = "py-compressed-kde",
     version = verstr,
-    packages = ['fklab.decode'],
+    packages = ['compressed_kde', 'compressed_kde.decode'],
     install_requires=['hdf5', 'yaml-cpp'],
     ext_modules = extensions,
     cmdclass = {'build_ext': my_build_ext},
+    license_files = ('../LICENSE.txt')
 )
     

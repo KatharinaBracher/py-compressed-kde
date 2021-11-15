@@ -17,13 +17,13 @@ PYBIND11_MODULE(compressed_kde, m) {
 
     m.doc() = \
     R"pbdoc(
-        ===================================================
-        Compressed KDE (:mod:`fklab.decode.compressed_kde`)
-        ===================================================
+        ======================================
+        Compressed KDE (:mod:`compressed_kde`)
+        ======================================
         
-        .. currentmodule:: fklab.decode.compressed_kde
+        .. currentmodule:: compressed_kde
         
-        Classes for compressed kernel density estimation and decoding.
+        Classes for compressed kernel density estimation.
         
         .. autosummary::
             :toctree: generated/
@@ -38,10 +38,6 @@ PYBIND11_MODULE(compressed_kde, m) {
             MultiSpace
             Mixture
             PartialMixture
-            Stimulus
-            PoissonLikelihood
-            Decoder
-            
     )pbdoc";
     
     py::enum_<Flags>(m,"Flags",py::arithmetic())
@@ -60,8 +56,28 @@ PYBIND11_MODULE(compressed_kde, m) {
     pybind_grid(m);
     pybind_space(m);
     pybind_mixture(m);
-    pybind_stimulus(m);
-    pybind_likelihood(m);
-    pybind_decoder(m);
+
+    py::module subm = m.def_submodule("decode",
+                                      R"pbdoc(
+                                          =====================================
+                                          Decode (:mod:`compressed_kde.decode`)
+                                          =====================================
+
+                                          .. currentmodule:: compressed_kde.decode
+
+                                          Classes for decoding.
+
+                                          .. autosummary::
+                                              :toctree: generated/
+
+                                              Stimulus
+                                              PoissonLikelihood
+                                              Decoder
+
+                                      )pbdoc");
+
+    pybind_stimulus(subm);
+    pybind_likelihood(subm);
+    pybind_decoder(subm);
     
 }
