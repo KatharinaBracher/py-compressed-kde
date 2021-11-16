@@ -1,0 +1,8 @@
+sphinx-automodapi
+nbsphinx
+ipython
+numpy
+scipy
+pyyaml
+h5py
+matplotlib
