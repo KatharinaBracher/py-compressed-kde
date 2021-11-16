@@ -1,13 +1,25 @@
 """
-=======================================
-Neural decoding (:mod:`compressed_kde`)
-=======================================
-
+======================================
+Compressed KDE (:mod:`compressed_kde`)
+======================================
+        
 .. currentmodule:: compressed_kde
-
-Tools for neural decoding.
-
-.. automodule:: compressed_kde.compressed_kde
+        
+Classes for compressed kernel density estimation.
+        
+.. autosummary::
+    :toctree: generated/
+    
+        GaussianKernel
+        EpanechnikovKernel
+        BoxKernel
+        EuclideanSpace
+        CategoricalSpace
+        CircularSpace
+        EncodedSpace
+        MultiSpace
+        Mixture
+        PartialMixture
 
 """
 
