@@ -14,7 +14,7 @@ pipelines:
           name: build package and deploy to anaconda cloud
           deployment: production
           script: # Modify the commands below to build your repository.
-            - echo "__version__ = \"$BITBUCKET_TAG\"" > python/fklab/_version.py
+            - echo "__version__ = \"$BITBUCKET_TAG\"" > python/_version.py
             - git add .
             - git commit -m "update version"
             - git push origin HEAD:master
@@ -22,7 +22,7 @@ pipelines:
             - conda config --set anaconda_upload yes
             - conda build python/recipe --user KloostermanLab -c conda-forge
       - step:
-          name: trigger the doc repository to re-build the doc
+          name: trigger the docs repository to re-build the docs
           script :
              - git clone --depth 1 https://$BITBUCKET_USER:$GIT_PWD@bitbucket.org/kloostermannerflab/fklab-python-doc.git
              - echo $BITBUCKET_TAG >> fklab-python-doc/source/py_compressed_decoder_version.rst

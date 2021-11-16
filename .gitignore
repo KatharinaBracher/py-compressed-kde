@@ -2,7 +2,9 @@
 docs/_build
 __pycache__
 *.py[cod]
-python/build
+*build
 *.so
-
+*.idea
+*.ipynb_checkpoints
+*generated
 
