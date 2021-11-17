@@ -7,19 +7,7 @@ Compressed KDE (:mod:`compressed_kde`)
         
 Classes for compressed kernel density estimation.
         
-.. autosummary::
-    :toctree: generated/
-    
-        GaussianKernel
-        EpanechnikovKernel
-        BoxKernel
-        EuclideanSpace
-        CategoricalSpace
-        CircularSpace
-        EncodedSpace
-        MultiSpace
-        Mixture
-        PartialMixture
+.. automodule:: compressed_kde.compressed_kde
 
 """
 
