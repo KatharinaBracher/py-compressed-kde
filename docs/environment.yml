@@ -1,0 +1,15 @@
+name: doc
+channels:
+- conda-forge
+- defaults
+dependencies:
+- python=3.8
+- sphinx-automodapi
+- nbsphinx
+- ipython
+- numpy
+- scipy
+- pyyaml
+- h5py
+- matplotlib
+- pybind11
