@@ -50,7 +50,7 @@ Overview
 
 .. rst-class:: column column3
 
-`How to use it ? <learn by example.rst>`_
+`How to use it ? <learn_by_example.rst>`_
 =========================================
 
 Practical step-by-step notebook for conducting an analysis
