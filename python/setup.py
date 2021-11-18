@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.extension import Extension
 
 from distutils.command.build_ext import build_ext
@@ -7,6 +7,7 @@ from distutils.sysconfig import get_config_var, customize_compiler
 import glob
 import os
 
+root_path = os.path.dirname(__file__)
 
 # use custom build_ext class that removes the -Wstrict-prototypes compiler flag
 # this flag is not supported for C++ and results in warnings
@@ -33,14 +34,15 @@ class get_pybind_include(object):
         import pybind11
         return pybind11.get_include(self.user)
   
-sources = glob.glob(os.path.abspath('../pybind/*.cpp')) + glob.glob(os.path.abspath('../src/*.cpp'))
+sources = glob.glob(os.path.abspath(os.path.join(root_path, '../pybind/*.cpp'))) + glob.glob(os.path.abspath(os.path.join(root_path, '../src/*.cpp')))
 
 extensions = [
     Extension(
         "compressed_kde.compressed_kde",
         sources = sources,
         libraries = ['yaml-cpp', 'hdf5'],
-        include_dirs = [os.path.abspath('../src'), os.path.abspath('../ext/HighFive-1.4/include'),
+        include_dirs = [os.path.abspath(os.path.join(root_path, '../src')), 
+                        os.path.abspath(os.path.join(root_path, '../ext/HighFive-1.4/include')),
                         get_config_var('INCLUDEDIR'), get_pybind_include(), get_pybind_include(user=True)],
         language = "c++",
         extra_compile_args = ['-std=c++17', '-O3'],
@@ -49,7 +51,7 @@ extensions = [
 
 import re
 
-VERSIONFILE = "_version.py"
+VERSIONFILE = os.path.join(root_path, "_version.py")
 verstrline = open(VERSIONFILE, "rt").read()
 VSRE = r"^__version__ = ['\"]([^'\"]*)['\"]"
 mo = re.search(VSRE, verstrline, re.M)
@@ -63,9 +65,14 @@ setup(
     name = "py-compressed-kde",
     version = verstr,
     packages = ['compressed_kde', 'compressed_kde.decode'],
-    install_requires=['hdf5', 'yaml-cpp'],
+    package_dir={
+            "compressed_kde": os.path.join(root_path,"compressed_kde"),
+            "compressed_kde.decode": os.path.join(root_path,"compressed_kde/decode"),
+            
+            },
+    install_requires=['h5py', 'pyyaml'],
     ext_modules = extensions,
     cmdclass = {'build_ext': my_build_ext},
-    license_files = ('../LICENSE.txt')
+    license_files = ( os.path.join(root_path,'../LICENSE.txt'))
 )
     
