@@ -46,7 +46,7 @@ Overview
 .. rst-class:: column column3
 
 `How to install the package ? <installation.rst>`_
-======================================================
+==================================================
 
 .. rst-class:: column column3
 
