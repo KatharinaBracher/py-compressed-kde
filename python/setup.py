@@ -8,7 +8,6 @@ import glob
 import os
 
 root_path = os.path.dirname(__file__)
-print(root_path)
 
 # use custom build_ext class that removes the -Wstrict-prototypes compiler flag
 # this flag is not supported for C++ and results in warnings
