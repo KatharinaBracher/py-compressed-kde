@@ -8,6 +8,7 @@ import glob
 import os
 
 root_path = os.path.dirname(__file__)
+print(root_path)
 
 # use custom build_ext class that removes the -Wstrict-prototypes compiler flag
 # this flag is not supported for C++ and results in warnings
@@ -64,7 +65,12 @@ else:
 setup(
     name = "py-compressed-kde",
     version = verstr,
-    packages = find_packages(include=['compressed_kde', 'compressed_kde.decode']),
+    packages = ['compressed_kde', 'compressed_kde.decode'],
+    package_dir={
+            "compressed_kde": os.path.join(root_path,"compressed_kde"),
+            "compressed_kde.decode": os.path.join(root_path,"compressed_kde/decode"),
+            
+            },
     install_requires=['h5py', 'pyyaml'],
     ext_modules = extensions,
     cmdclass = {'build_ext': my_build_ext},
