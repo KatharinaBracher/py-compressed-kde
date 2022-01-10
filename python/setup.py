@@ -36,6 +36,9 @@ class get_pybind_include(object):
   
 sources = glob.glob(os.path.abspath(os.path.join(root_path, '../pybind/*.cpp'))) + glob.glob(os.path.abspath(os.path.join(root_path, '../src/*.cpp')))
 
+if len(sources)==0:
+    raise ValueError("No sources in {} and {}!".format(os.path.abspath(os.path.join(root_path, '../pybind/*.cpp')), os.path.abspath(os.path.join(root_path, '../src/*.cpp'))))
+
 extensions = [
     Extension(
         "compressed_kde.compressed_kde",
