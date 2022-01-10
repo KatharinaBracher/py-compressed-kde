@@ -38,6 +38,8 @@ sources = glob.glob(os.path.abspath(os.path.join(root_path, '../pybind/*.cpp')))
 
 if len(sources)==0:
     raise ValueError("No sources in {} and {}!".format(os.path.abspath(os.path.join(root_path, '../pybind/*.cpp')), os.path.abspath(os.path.join(root_path, '../src/*.cpp'))))
+else:
+    print(sources)
 
 extensions = [
     Extension(
