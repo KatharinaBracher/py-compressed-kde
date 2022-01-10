@@ -1,6 +1,6 @@
 package:
   name: py-compressed-decoder
-  version: {{ GIT_DESCRIBE_TAG }}
+  version: {{ environ.get('GIT_DESCRIBE_TAG', 'default') }}
 
 source:
   git_url: ../..
