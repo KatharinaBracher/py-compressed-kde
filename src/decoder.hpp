@@ -32,18 +32,86 @@ public:
         const std::vector<std::vector<value>> & prior = {} );
     
     // decoding methods
-    void decode( std::vector<value*> events, std::vector<unsigned int> nevents, 
+
+    /**
+     * @brief decode with multiple sources and multiple union
+     * @param events  each element of the vector contains the event for one source
+     * @param nevents each element of the vector contains the number of event for one source
+     * @param delta_t
+     * @param result pre-initialized to be the size of the number of stimulus space and then contains in each element an array of grid size (?)
+     * @param normalize
+     */
+    void decode( std::map<std::string, value*> events, std::map<std::string, unsigned int> nevents,
         value delta_t, std::vector<value*> result, bool normalize=true );
-    
+
+    /**
+     * @brief decode with multiple sources and multiple union
+     * @param events  each element of the vector contains the event for one source
+     * @param nevents each element of the vector contains the number of event for one source
+     * @param delta_t
+     * @param result pre-initialized to be the size of the number of stimulus space and then contains in each element an array of grid size (?)
+     * @param normalize
+     */
+    void decode( std::vector<value*> events, std::vector<unsigned int> nevents,
+        value delta_t, std::vector<value*> result, bool normalize=true );
+
+    /**
+     * @brief decode with multiple sources and 1 stimulus space
+     * @param events  each element of the vector contains the event for one source
+     * @param nevents each element of the vector contains the number of event for one source
+     * @param delta_t
+     * @param result pre-initialized array of grid size (?)
+     * @param normalize
+     */
+    void decode ( std::map<std::string,value*> events, std::map<std::string,unsigned int> nevents,
+        value delta_t, value* result, unsigned int index=0, bool normalize=true );
+
+    /**
+     * @brief decode with multiple sources and 1 stimulus space
+     * @param events  each element of the vector contains the event for one source
+     * @param nevents each element of the vector contains the number of event for one source
+     * @param delta_t
+     * @param result pre-initialized array of grid size (?)
+     * @param normalize
+     */
     void decode ( std::vector<value*> events, std::vector<unsigned int> nevents,
         value delta_t, value* result, unsigned int index=0, bool normalize=true );
-    
+
+    /**
+     * @brief decode with multiple sources with multiple stimulus spaces (union) - used to reshape the events dimension from a std::vector to an array before calling
+     * the decode method upper
+     * @param events first dim is the number of sources, second dim the number of events per source
+     * @param delta_t
+     * @param result pre-initialized to be the size of the number of stimulus space and then contains in each element an array of grid size (?)
+     * @param normalize
+     */
     void decode ( std::vector<std::vector<value>> events, value delta_t,
         std::vector<value*> result, bool normalize=true );
-    
+
+    /**
+     * @brief decode with multiple sources with 1 stimulus space - used to reshape the events dimension from a std::vector to an array before calling
+     * the decode method upper
+     * @param events first dim is the number of sources, second dim the number of events per source
+     * @param delta_t
+     * @param result pre-initialized array of grid size
+     * @param normalize
+     */
     void decode ( std::vector<std::vector<value>> events, value delta_t,
         value* result, unsigned int index=0, bool normalize=true );
-    
+
+    /**
+     * @brief compute_posterior based on likelihood result with multiple stimulus spaces (unions)
+     * @param result number of unions x grid size
+     * @param normalize
+     */
+    void compute_posterior(std::vector<value *>  result, bool normalize);
+
+    /**
+     * @brief compute_posterior based on likelihood result with 1 stimulus space
+     * @param result - grid size ?
+     * @param normalize
+     */
+    void compute_posterior(value * result,  unsigned int index, bool normalize);
     // properties
     unsigned int nsources() const;
     bool is_union() const;

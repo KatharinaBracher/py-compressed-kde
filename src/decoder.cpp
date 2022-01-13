@@ -72,12 +72,12 @@ Decoder::Decoder( std::vector<std::vector<std::shared_ptr<PoissonLikelihood>>> &
                 throw std::runtime_error("Union likelihoods across sources need "
                     "to have the same grid size and space.");
             }
-        }
-    }
-    
-    for (unsigned int source=0; source<nsources; ++source) {
-        for (unsigned int index = 1; index<nunion; ++index) {
+
             // to do: check if likelihoods[source][index] has the same event space as likelihoods[source][0]
+            if ( ! (likelihoods[source][index]->stimulus()==likelihoods[0][index]->stimulus() ) ) {
+                throw std::runtime_error("Union likelihoods across sources need "
+                    "to have the same event size and space.");
+            }
         }
     }
     
@@ -122,42 +122,48 @@ void Decoder::decode( std::vector<value*> events, std::vector<unsigned int> neve
         }
     }
     
+    compute_posterior(result, normalize);
+
+}
+
+void Decoder::compute_posterior(std::vector<value *> result, bool normalize){
+
     // add log prior
     for (unsigned int index=0; index<n_union(); ++index) {
         if (prior_[index].size()>0) {
             std::transform( result[index], result[index]+prior_[index].size(), prior_[index].data(), result[index], std::plus<value>() );
         }
     }
-    
-    
+
     // normalize across union
     if (normalize) {
-    
+
         // find maximum across union
         value max = *std::max_element( result[0], result[0] + grid_sizes_[0] );
         for (unsigned int index=1; index<n_union(); ++index) {
             max = std::max( max, *std::max_element( result[index], result[index] + grid_sizes_[index] ) );
         }
-        
+
         // compute exp( x - max )
         for (unsigned int index=0; index<n_union(); ++index) {
             std::transform( result[index], result[index] + grid_sizes_[index], result[index], [max]( const value & a ) { return fastexp( a - max ); } );
         }
-        
+
         // compute sum across union
         value sum = 0.;
         for (unsigned int index=0; index<n_union(); ++index) {
             sum += std::accumulate( result[index], result[index] + grid_sizes_[index], 0. );
         }
-        
+
         // divide by sum
         for (unsigned int index=0; index<n_union(); ++index) {
             std::transform( result[index], result[index] + grid_sizes_[index], result[index], [sum]( const value & a ) { return a/sum; } );
         }
-    
+
     }
-    
+
 }
+
 
 void Decoder::decode( std::vector<value*> events, std::vector<unsigned int> nevents, 
     value delta_t, value* result, unsigned int index, bool normalize ) {
@@ -186,14 +192,18 @@ void Decoder::decode( std::vector<value*> events, std::vector<unsigned int> neve
         likelihoods_[source][index]->logL( events[source], n, delta_t, result );
     }
     
+    compute_posterior(result, index, normalize);
+}
+
+void Decoder::compute_posterior(value * result,  unsigned int index, bool normalize){
     // add log prior
     if (prior_[index].size()>0) {
         std::transform( result, result+prior_[index].size(), prior_[index].data(), result, std::plus<value>() );
     }
-    
+
     // normalize
     if (normalize) {
-        
+
         // find maximum
         value max = *std::max_element( result, result + grid_sizes_[0] );
         // compute exp( x - max )
@@ -204,7 +214,6 @@ void Decoder::decode( std::vector<value*> events, std::vector<unsigned int> neve
         std::transform( result, result + grid_sizes_[0], result, [sum]( const value & a ) { return a/sum; } );
     }
 }
-
 void Decoder::decode ( std::vector<std::vector<value>> events, value delta_t, 
     std::vector<value*> result, bool normalize ) {
     
