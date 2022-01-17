@@ -305,6 +305,68 @@ std::unique_ptr<PoissonLikelihood> PoissonLikelihood::from_yaml(
 }
 
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::PoissonLikelihood> PoissonLikelihood::to_flatbuffers(flatbuffers::FlatBufferBuilder &builder, bool save_stimulus) const {
+
+    auto events = event_distribution_->to_flatbuffers(builder);
+
+    flatbuffers::Offset<fb_serialize::StimulusOccupancy> stim;
+
+    if (save_stimulus) {
+        stim = stimulus_distribution_->to_flatbuffers(builder);
+    }
+
+    fb_serialize::PoissonLikelihoodBuilder likelihood_builder(builder);
+
+    likelihood_builder.add_rate_scale(rate_scale_);
+    likelihood_builder.add_random_insertion(random_insertion_);
+    likelihood_builder.add_event_distribution(events);
+
+    if (save_stimulus) {
+        likelihood_builder.add_stimulus_distribution(stim);
+    }
+
+    auto fb_lhood = likelihood_builder.Finish();
+
+    return fb_lhood;
+}
+
+std::unique_ptr<PoissonLikelihood> PoissonLikelihood::from_flatbuffers(const fb_serialize::PoissonLikelihood * likelihood, std::shared_ptr<StimulusOccupancy> stimulus) {
+
+    auto rate_scale = likelihood->rate_scale();
+    bool random_insertion = likelihood->random_insertion();
+
+    auto event_dist = Mixture::from_flatbuffers(likelihood->event_distribution());
+
+    // if stimulus distribution was not saved, it should be passed in as shared_ptr
+    if (likelihood->stimulus_distribution()==nullptr) {
+        if (stimulus==nullptr) {
+            throw std::runtime_error("Stimulus distribution was not saved and should be provided.");
+        }
+    } else {
+        if (stimulus!=nullptr) {
+            throw std::runtime_error("Found both saved stimulus distribution and non-null stimulus argument.");
+        }
+        stimulus = StimulusOccupancy::from_flatbuffers(likelihood->stimulus_distribution());
+    }
+
+    // let create "empty" PoissonLikelihood using protected default constructor
+    auto p = std::unique_ptr<PoissonLikelihood>(new PoissonLikelihood());
+
+    // and set member variables
+    p->event_distribution_ = std::move(event_dist);
+    p->stimulus_distribution_ = stimulus;
+    p->stimulus_grid_.reset(stimulus->grid().clone());
+    p->logp_stimulus_.assign(p->stimulus_grid_->size(), 0.);
+    p->event_rate_.assign(p->stimulus_grid_->size(), 0.);
+
+    p->rate_scale_ = rate_scale;
+    p->random_insertion_ = random_insertion;
+
+    return p;
+}
+
+
 // hdf5
 void PoissonLikelihood::to_hdf5(HighFive::Group & group, bool save_stimulus) const {
     HighFive::DataSet ds_scale = group.createDataSet<value>("rate_scale", HighFive::DataSpace::From(rate_scale_));

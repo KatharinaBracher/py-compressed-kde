@@ -45,6 +45,10 @@ public:
     virtual YAML::Node to_yaml_impl() const;
     static std::unique_ptr<EpanechnikovKernel> from_yaml( const YAML::Node & node );
     
+    // flatbuffers
+    flatbuffers::Offset<fb_serialize::Kernel> to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const override;
+    static std::unique_ptr<EpanechnikovKernel> from_flatbuffers(const fb_serialize::EpanechnikovKernel * kernel);
+
     // hdf5
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     static std::unique_ptr<EpanechnikovKernel> from_hdf5(const HighFive::Group & group);

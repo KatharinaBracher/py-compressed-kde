@@ -139,6 +139,25 @@ std::unique_ptr<GaussianKernel> GaussianKernel::from_yaml(
 }
 
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::Kernel> GaussianKernel::to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const {
+
+    return fb_serialize::CreateKernel(
+        builder,
+        builder.CreateString(kerneltype_tostring(type())),
+        fb_serialize::KernelType_GaussianKernel,
+        fb_serialize::CreateGaussianKernel(
+            builder,
+            cutoff_
+        ).Union()
+    );
+}
+
+std::unique_ptr<GaussianKernel> GaussianKernel::from_flatbuffers(const fb_serialize::GaussianKernel * kernel) {
+    return std::make_unique<GaussianKernel>(kernel->cutoff());
+}
+
+
 // hdf5
 void GaussianKernel::to_hdf5_impl(HighFive::Group & group) const {
     HighFive::DataSet ds = group.createDataSet<value>(

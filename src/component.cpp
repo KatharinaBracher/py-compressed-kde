@@ -61,3 +61,45 @@ std::unique_ptr<Component> Component::from_hdf5(const HighFive::Group & group) {
     
     return k;
 }
+
+
+std::vector<std::unique_ptr<Component>> components_from_flatbuffers(
+    const fb_serialize::Kernels * kernels
+) {
+
+    std::vector<std::unique_ptr<Component>> components;
+
+    auto ndim = kernels->ndim();
+    auto nbw = kernels->nbw();
+    auto nkernels = kernels->nkernels();
+
+    auto it_loc = kernels->locations()->cbegin();
+    auto it_bw = kernels->bandwidth()->cbegin();
+
+    for (unsigned int k=0; k<nkernels; ++k){
+        try {
+            auto comp = std::make_unique<Component>();
+
+            comp->location.insert(
+                comp->location.begin(),
+                it_loc, it_loc+ndim
+            );
+
+            it_loc+=ndim;
+
+            comp->bandwidth.insert(
+                comp->bandwidth.begin(),
+                it_bw, it_bw+nbw
+            );
+
+            it_bw+=nbw;
+
+            components.push_back(std::move(comp));
+
+        } catch (std::exception & me) { // ToDo: catch proper exception
+            throw std::runtime_error("Cannot load kernel data.");
+        }
+    }
+
+    return components;
+}

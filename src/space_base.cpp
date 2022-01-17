@@ -167,6 +167,35 @@ void Space::save_to_yaml( std::string path, bool flow ) const {
 }
 
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::Space> Space::to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const {
+
+    auto klass_str = builder.CreateString(klass());
+
+    auto defkernel = fb_serialize::CreateKernels(
+        builder,
+        this->ndim(),
+        this->nbw(),
+        1,
+        builder.CreateVector(this->default_kernel_.location),
+        builder.CreateVector(this->default_kernel_.bandwidth)
+    );
+
+    auto data = this->to_flatbuffers_impl(builder);
+
+    return fb_serialize::CreateSpace(
+        builder,
+        klass_str,
+        defkernel,
+        data
+    );
+}
+
+flatbuffers::Offset<fb_serialize::SpaceData> Space::to_flatbuffers_impl(flatbuffers::FlatBufferBuilder & builder) const {
+    throw std::runtime_error("Not implemented.");
+}
+
+
 // hdf5
 void Space::to_hdf5(HighFive::Group & group) const {
     

@@ -56,6 +56,26 @@ DimSpecification DimSpecification::from_yaml( const YAML::Node & node ) {
         node["extra"].as<std::string>() );
 }    
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::Dimension> DimSpecification::to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const{
+    return fb_serialize::CreateDimension(
+        builder,
+        builder.CreateString(name_),
+        builder.CreateString(type_),
+        builder.CreateString(extra_)
+    );
+}
+
+DimSpecification DimSpecification::from_flatbuffers(const fb_serialize::Dimension * dimension) {
+
+    std::string name = dimension->name()->str();
+    std::string type = dimension->type()->str();
+    std::string extra = dimension->extra()->str();
+
+    return DimSpecification(name, type, extra);
+}
+
+
 // hdf5
 void DimSpecification::to_hdf5(HighFive::Group & group) const {
     
@@ -296,6 +316,41 @@ SpaceSpecification SpaceSpecification::from_yaml( const YAML::Node & node ) {
     }
     
     return SpaceSpecification( dspec );
+}
+
+
+// flatbuffers
+flatbuffers::Offset<fb_serialize::SpaceSpecification> SpaceSpecification::to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const{
+
+    std::vector<flatbuffers::Offset<fb_serialize::Dimension>> dim_vector;
+    for (auto & k : dims_) {
+        dim_vector.push_back(
+            k.to_flatbuffers(builder)
+        );
+    }
+    auto dims = builder.CreateVector(dim_vector);
+
+    return fb_serialize::CreateSpaceSpecification(
+        builder,
+        dims
+    );
+}
+
+SpaceSpecification SpaceSpecification::from_flatbuffers(const fb_serialize::SpaceSpecification * spec) {
+
+    std::vector<DimSpecification> dspec;
+
+    unsigned int ndim = spec->dimensions()->size();
+
+    for (unsigned int k=0; k<ndim; ++k) {
+        dspec.push_back(
+            DimSpecification::from_flatbuffers(
+                spec->dimensions()->Get(k)
+            )
+        );
+    }
+
+    return SpaceSpecification(dspec);
 }
 
 

@@ -37,9 +37,7 @@ EncodedSpace::EncodedSpace( std::string name, const std::vector<value> & points,
     if (nlut_*nlut_ != lut_->size()) {
         throw std::runtime_error("Squared distance look-up table needs to be a square matrix.");
     }
-    
-    //std::cout << "nlut, size: " << std::to_string(nlut_) << ", " << std::to_string(lut_->size()) << std::endl;
-    
+
     if (points.empty()) {
         
         use_index_ = true;
@@ -187,13 +185,13 @@ unsigned int EncodedSpace::get_index(value x) const {
     }
     
     if (result>=nlut_) {
-        std::cout << "get_index: out of range " << std::to_string(result) << " " << std::to_string(nlut_) << std::endl;
-        std::cout << "x, points size, use_index: " << std::to_string(x) << " " << std::to_string(points_->size()) << " " << std::to_string(use_index_) << std::endl;
-        throw std::runtime_error("get index: out of range.");
+        throw std::runtime_error(
+            "get index: out of range. (index = " + std::to_string(result) + 
+            " for original input " + std::to_string(x) + "and use index = " +
+            std::to_string(use_index_) + ")"
+        );
     }
-    
-    //std::cout << "x, index, points[index] " << std::to_string(x) << ", " << std::to_string(result) << ", " << std::to_string( (*points_)[result] ) << std::endl;
-    
+
     return result;
 }
 
@@ -203,25 +201,19 @@ value EncodedSpace::mahalanobis_distance_squared( const value * refloc,
     unsigned int index1;
     unsigned int index2;
     
-    //std::cout << "encoded space: mahalanobis distance " << std::to_string(*refloc) << " " << std::to_string(*targetloc) << std::endl;
-    
     try {
         index1 = get_index(*refloc);
         index2 = get_index(*targetloc);
     } catch (...) {
         return threshold;
     }
-    
-    //if (index1>=nlut_ || index2>=nlut_) { return threshold; }
-    //std::cout << "encoded space: mahalanobis distance returns " << std::to_string(index1) << " " << std::to_string(index2) << std::endl;
+
     return (*lut_)[index1 + nlut_*index2] / (*refbw * *refbw);
 }
 
 void EncodedSpace::merge( value w1, value * loc1, value * bw1, value w2, 
     const value * loc2, const value * bw2 ) const {
-    
-    //std::cout << "encoded space: merge" << std::endl;
-    
+
     // find lut entry k that minimizes w1*lut[index1,k] + w2*lut[index2,k]
     auto index1 = get_index(*loc1);
     auto index2 = get_index(*loc2);
@@ -254,17 +246,13 @@ value EncodedSpace::probability( const value * loc, const value * bw,
     const value * point ) const {
     
     unsigned int idx;
-    
-    //std::cout << "encoded space: probability" << std::endl;
-    
+
     try {
         idx = get_index( *point );
     } catch (...) {
         return 0.;
     }
-    
-    //if (idx>=nlut_) { return 0.; }
-    
+
     value d = (*lut_)[idx + nlut_*get_index(*loc)] / (*bw * *bw);
     
     return kernel_->probability( d );
@@ -281,19 +269,15 @@ value EncodedSpace::log_probability( const value * loc, const value * bw,
     const value * point ) const {
     
     unsigned int idx;
-    
-    //std::cout << "encoded space: log probability" << std::endl;
-    
+
     try {
         idx = get_index( *point );
     } catch (...) {
         return -std::numeric_limits<value>::infinity();
     }
-    
-    //if (idx>=nlut_) { return -std::numeric_limits<value>::infinity(); }
-    
+
     value d = (*lut_)[idx + nlut_*get_index(*loc)] / (*bw * *bw);
-    
+
     return kernel_->log_probability( d );
 }
 
@@ -309,29 +293,21 @@ value EncodedSpace::partial_logp( const value * loc, const value * bw,
     
     value p=0.;
     unsigned int idx;
-    
-    //std::cout << "encoded space: partial logp " << std::to_string(*loc) << " " << std::to_string(*point) << std::endl;
-    //std::cout << "selection: " << std::to_string(*selection) << std::endl;
-    //std::cout << "bandwidth: " << std::to_string(*bw) << std::endl;
-    
+
     if (*selection) {
-        //unsigned int idx = static_cast<unsigned int>( *point );
+
         try {
             idx = get_index(*point);
         } catch (...) {
             p = -std::numeric_limits<value>::infinity();
             return p;
         }
-        //if (idx>=nlut_) { p=-std::numeric_limits<value>::infinity(); }
-        //else {
-            p = (*lut_)[idx + nlut_*get_index(*loc)] / (*bw * *bw);
-            
-            //if (p>=cutoff_squared_) { p=-std::numeric_limits<value>::infinity(); } else { p = -0.5*p; }
-            //std::cout << "fast log: " << std::to_string(p) << std::endl;
-            p = fastlog( kernel_->probability( p ) );
-        //}
+
+        p = (*lut_)[idx + nlut_*get_index(*loc)] / (*bw * *bw);
+        p = fastlog( kernel_->probability( p ) );
+
     }
-    
+
     return p;
 }
 
@@ -375,6 +351,73 @@ YAML::Node EncodedSpace::to_yaml_impl() const {
         node["points"] = *points_;
     }
     return node;
+}
+
+
+// flatbuffers
+flatbuffers::Offset<fb_serialize::SpaceData> EncodedSpace::to_flatbuffers_impl(flatbuffers::FlatBufferBuilder & builder) const {
+
+    auto name = builder.CreateString(specification().dim(0).name());
+    auto kernel = kernel_->to_flatbuffers(builder);
+    auto lut = builder.CreateVector(*lut_);
+
+    flatbuffers::Offset<flatbuffers::Vector<double>> points;
+    if (!use_index_) {
+        points = builder.CreateVector(*points_);
+    }
+
+    auto space_builder = fb_serialize::EncodedSpaceBuilder(builder);
+
+    space_builder.add_name(name);
+    space_builder.add_kernel(kernel);
+    space_builder.add_lut(lut);
+    space_builder.add_use_index(use_index_);
+
+    if (!use_index_) {
+        space_builder.add_points(points);
+    }
+
+    auto data = space_builder.Finish().Union();
+
+    return fb_serialize::CreateSpaceData(
+        builder,
+        fb_serialize::SpaceType_EncodedSpace,
+        data
+    );
+}
+
+std::unique_ptr<EncodedSpace> EncodedSpace::from_flatbuffers(const fb_serialize::Space * space) {
+
+    auto saved_klass = space->klass()->str();
+
+    if (saved_klass!="encoded") {
+        throw std::runtime_error("Expected encoded, but got " + saved_klass);
+    }
+
+    auto default_kernel = components_from_flatbuffers(space->default_kernel());
+
+    auto data = space->data()->value_as_EncodedSpace();
+
+    std::string name = data->name()->str();
+
+    std::vector<value> lut(data->lut()->cbegin(), data->lut()->cend());
+
+    std::unique_ptr<Kernel> k = kernel_from_flatbuffers(
+        data->kernel()
+    );
+
+    std::unique_ptr<EncodedSpace> ptr;
+
+    if (!data->use_index()) {
+        std::vector<value> points(data->points()->cbegin(), data->points()->cend());
+        ptr = std::make_unique<EncodedSpace>(name, points, lut, *k);
+    } else {
+        ptr = std::make_unique<EncodedSpace>(name, std::vector<value>(), lut, *k);
+    }
+
+    ptr->set_default_kernel(*(default_kernel[0]));
+
+    return ptr;
 }
 
 

@@ -27,6 +27,8 @@
 #include <highfive/H5File.hpp>
 #include "highfive/H5Group.hpp"
 
+#include "datatype_generated.h"
+
 #include <string>
 #include <vector>
 #include <fstream>
@@ -114,6 +116,11 @@ public:
     void save_to_yaml( std::ostream & stream, bool flow=false ) const;
     void save_to_yaml( std::string path, bool flow=false ) const;
     
+    // flatbuffers
+    virtual flatbuffers::Offset<fb_serialize::Grid> to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const;
+    virtual std::vector<flatbuffers::Offset<fb_serialize::FloatArray>> to_flatbuffers_data(flatbuffers::FlatBufferBuilder & builder) const;
+    virtual std::vector<flatbuffers::Offset<fb_serialize::Grid>> to_flatbuffers_grids(flatbuffers::FlatBufferBuilder & builder) const;
+
     // hdf5
     void to_hdf5(HighFive::Group & group) const;
     virtual void to_hdf5_impl(HighFive::Group & group) const;

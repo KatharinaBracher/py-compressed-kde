@@ -23,6 +23,8 @@
 #include <highfive/H5File.hpp>
 #include "highfive/H5Group.hpp"
 
+#include "datatype_generated.h"
+
 #include "yaml-cpp/yaml.h"
 #include <string>
 
@@ -51,6 +53,10 @@ public:
     YAML::Node to_yaml() const;
     static DimSpecification from_yaml( const YAML::Node & node );
     
+    // flatbuffers
+    flatbuffers::Offset<fb_serialize::Dimension> to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const;
+    static DimSpecification from_flatbuffers(const fb_serialize::Dimension * spec);
+
     // hdf5
     void to_hdf5(HighFive::Group & group) const;
     static DimSpecification from_hdf5(const HighFive::Group & group);
@@ -104,6 +110,10 @@ public:
     YAML::Node to_yaml() const;
     static SpaceSpecification from_yaml( const YAML::Node & node );
     
+    // flatbuffers
+    flatbuffers::Offset<fb_serialize::SpaceSpecification> to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const;
+    static SpaceSpecification from_flatbuffers(const fb_serialize::SpaceSpecification * spec);
+
     // hdf5
     void to_hdf5(HighFive::Group & group) const;
     static SpaceSpecification from_hdf5(const HighFive::Group & group);

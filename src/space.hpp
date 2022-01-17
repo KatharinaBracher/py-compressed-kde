@@ -28,5 +28,8 @@
 std::unique_ptr<Space> space_from_yaml( const YAML::Node & node );
 std::unique_ptr<Space> load_space_from_yaml( std::string path );
 
+// flatbuffers
+std::unique_ptr<Space> space_from_flatbuffers(const fb_serialize::Space * space );
+
 // hdf5
 std::unique_ptr<Space> space_from_hdf5(const HighFive::Group & group);

@@ -20,6 +20,7 @@
 
 #include "common.hpp"
 #include "likelihood.hpp"
+#include "datatype_generated.h"
 
 #include <memory>
 
@@ -75,6 +76,10 @@ public:
     void disable_source( unsigned int source );
     const std::vector<bool> & enabled_sources() const;
     
+    // flatbuffers
+    flatbuffers::Offset<fb_serialize::Decoder> to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const;
+    static std::unique_ptr<Decoder> from_flatbuffers(const fb_serialize::Decoder * decoder);
+
     // hdf5 
     void to_hdf5(HighFive::Group & group) const;
     static std::unique_ptr<Decoder> from_hdf5(const HighFive::Group & group);

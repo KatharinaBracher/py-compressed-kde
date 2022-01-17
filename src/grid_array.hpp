@@ -58,6 +58,10 @@ public:
     virtual YAML::Node to_yaml_impl() const;
     static std::unique_ptr<Grid> from_yaml( const YAML::Node & node, const SpaceSpecification & space, const std::vector<bool> & valid, std::vector<long unsigned int> shape );
     
+    //flatbuffers
+    virtual std::vector<flatbuffers::Offset<fb_serialize::FloatArray>> to_flatbuffers_data(flatbuffers::FlatBufferBuilder & builder) const;
+    static std::unique_ptr<ArrayGrid> from_flatbuffers(const fb_serialize::Grid * grid);
+
     // hdf5
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     static std::unique_ptr<Grid> from_hdf5(const HighFive::Group & group, const SpaceSpecification & space, const std::vector<bool> & valid, std::vector<long unsigned int> shape );

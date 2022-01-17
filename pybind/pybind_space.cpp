@@ -155,7 +155,7 @@ void pybind_space(py::module &m) {
             nullptr,
             sizeof(value),
             py::format_descriptor<value>::value,
-            bufx.shape.size(),
+            bufx.ndim,
             bufx.shape,
             bufx.strides
         ));
@@ -249,9 +249,13 @@ void pybind_space(py::module &m) {
         -------
         Grid
         
-    )pbdoc" );
-    
-    
+    )pbdoc" )
+
+    .def(py::pickle(
+        &(pickle_get_state<EuclideanSpace>),
+        &(pickle_set_state<EuclideanSpace, fb_serialize::Space>)
+    ));
+
     // CATEGORICAL SPACE CLASS
     py::class_<CategoricalSpace, Space>(m, "CategoricalSpace",
     R"pbdoc(
@@ -279,9 +283,13 @@ void pybind_space(py::module &m) {
         -------
         Grid
         
-    )pbdoc" );
-    
-    
+    )pbdoc" )
+
+    .def(py::pickle(
+        &(pickle_get_state<CategoricalSpace>),
+        &(pickle_set_state<CategoricalSpace, fb_serialize::Space>)
+    ));
+
     // MULTIPLICATIVE SPACE CLASS
     py::class_<MultiSpace, Space>(m, "MultiSpace",
     R"pbdoc(
@@ -294,7 +302,8 @@ void pybind_space(py::module &m) {
         
     )pbdoc")
     .def( py::init<std::vector<const Space*>>(), py::arg("spaces"))
-    
+
+    .def( "child", &MultiSpace::child, py::return_value_policy::reference_internal)
     .def( "grid", [](const MultiSpace& obj, std::vector<Grid*> & g, py::array_t<bool, py::array::c_style | py::array::forcecast> & valid) {
             
             // check that shape of input equals the grid shape
@@ -331,9 +340,14 @@ void pybind_space(py::module &m) {
         -------
         Grid
         
-    )pbdoc" );
+    )pbdoc" )
     
-    
+    .def(py::pickle(
+        &(pickle_get_state<MultiSpace>),
+        &(pickle_set_state<MultiSpace, fb_serialize::Space>)
+    ));
+
+
     // CIRCULAR SPACE CLASS
     py::class_<CircularSpace, Space>(m, "CircularSpace",
     R"pbdoc(
@@ -350,7 +364,7 @@ void pybind_space(py::module &m) {
         
     )pbdoc")
     .def( py::init<std::string, value, value>(), py::arg("label"), py::arg("kappa")=DEFAULT_KAPPA, py::arg("mu")=DEFAULT_MU)
-    
+
     .def( "grid", [](const CircularSpace& obj, unsigned int n, value offset) {
         return std::unique_ptr<Grid>( obj.grid(n, offset) );
         }, 
@@ -372,9 +386,13 @@ void pybind_space(py::module &m) {
         -------
         Grid
         
-    )pbdoc" );
-    
-    
+    )pbdoc" )
+
+    .def(py::pickle(
+        &(pickle_get_state<CircularSpace>),
+        &(pickle_set_state<CircularSpace, fb_serialize::Space>)
+    ));
+
     // ENCODED SPACE CLASS
     py::class_<EncodedSpace, Space>(m, "EncodedSpace",
     R"pbdoc(
@@ -454,6 +472,11 @@ void pybind_space(py::module &m) {
         -------
         Grid
 
-    )pbdoc" );
-    
+    )pbdoc" )
+
+    .def(py::pickle(
+        &(pickle_get_state<EncodedSpace>),
+        &(pickle_set_state<EncodedSpace, fb_serialize::Space>)
+    ));
+
 }

@@ -19,6 +19,7 @@ class my_build_ext(build_ext):
             self.compiler.compiler_so.remove("-Wstrict-prototypes")
         except (AttributeError, ValueError):
             pass
+
         build_ext.build_extensions(self)
 
 
@@ -39,6 +40,7 @@ sources = glob.glob(os.path.abspath(os.path.join(root_path, '../pybind/*.cpp')))
 
 include_dirs = [
     os.path.abspath(os.path.join(root_path, '../src')), 
+    os.path.abspath(os.path.join(root_path, '../src/generated')),
     os.path.abspath(os.path.join(root_path, '../ext/HighFive-1.4/include')),
     get_config_var('INCLUDEDIR'),
     get_pybind_include(), get_pybind_include(user=True)
@@ -55,11 +57,14 @@ elif sys.platform.startswith('linux'):
 else:
     compile_args = []
 
+os.makedirs("../src/generated", exist_ok=True)
+os.system("flatc --cpp -o ../src/generated ../src/datatype.fbs")
+
 extensions = [
     Extension(
         "compressed_kde.compressed_kde",
         sources = sources,
-        libraries = ['yaml-cpp', 'hdf5'],
+        libraries = ['yaml-cpp', 'hdf5', 'flatbuffers'],
         include_dirs = include_dirs,
         library_dirs = library_dirs,
         language = "c++",
@@ -78,7 +83,6 @@ if mo:
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
-
 setup(
     name = "py-compressed-kde",
     version = verstr,
@@ -88,7 +92,7 @@ setup(
             "compressed_kde.decode": os.path.join(root_path,"compressed_kde/decode"),
             
             },
-    install_requires=['h5py', 'pyyaml'],
+    install_requires=['h5py', 'pyyaml', 'flatbuffers'],
     ext_modules = extensions,
     cmdclass = {'build_ext': my_build_ext},
     license_files = ( os.path.join(root_path,'../LICENSE.txt'))

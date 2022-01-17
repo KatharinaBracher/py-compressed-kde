@@ -26,8 +26,13 @@
 
 #include "yaml-cpp/yaml.h"
 
+#include "datatype_generated.h"
+
 // yaml
 std::unique_ptr<Kernel> kernel_from_yaml( const YAML::Node & node );
+
+// flatbuffers
+std::unique_ptr<Kernel> kernel_from_flatbuffers( const fb_serialize::Kernel * kernel);
 
 // hdf5
 std::unique_ptr<Kernel> kernel_from_hdf5( const HighFive::Group & group );

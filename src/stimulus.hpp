@@ -22,6 +22,7 @@
 #include "space.hpp"
 #include "grid.hpp"
 #include "mixture.hpp"
+#include "datatype_generated.h"
 
 #include <memory>
 #include <mutex>
@@ -62,6 +63,10 @@ public:
     void save_to_yaml( std::string path ) const;
     static std::unique_ptr<StimulusOccupancy> from_yaml(const YAML::Node & node);
     
+    // flatbuffers
+    flatbuffers::Offset<fb_serialize::StimulusOccupancy> to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const;
+    static std::unique_ptr<StimulusOccupancy> from_flatbuffers(const fb_serialize::StimulusOccupancy * stimulus);
+
     // hdf5
     void to_hdf5(HighFive::Group & group) const;
     static std::unique_ptr<StimulusOccupancy> from_hdf5(const HighFive::Group & group);

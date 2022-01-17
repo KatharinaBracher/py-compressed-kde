@@ -19,6 +19,7 @@
 #pragma once
 
 #include "space.hpp"
+#include "datatype_generated.h"
 
 #include <vector>
 #include <memory>
@@ -84,6 +85,10 @@ public:
     static std::unique_ptr<Mixture> from_yaml( const YAML::Node & node );
     static std::unique_ptr<Mixture> load_from_yaml( std::string path );
     
+    // flatbuffers
+    flatbuffers::Offset<fb_serialize::Mixture> to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const;
+    static std::unique_ptr<Mixture> from_flatbuffers(const fb_serialize::Mixture * mixture);
+
     // hdf5
     void to_hdf5(HighFive::Group & group) const;
     

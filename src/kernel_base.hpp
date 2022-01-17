@@ -31,6 +31,8 @@
 
 #include "yaml-cpp/yaml.h"
 
+#include "datatype_generated.h"
+
 enum class KernelType { Gaussian, Epanechnikov, Box };
 
 std::string kerneltype_tostring( KernelType k );
@@ -63,6 +65,9 @@ public:
     YAML::Node to_yaml() const;
     virtual YAML::Node to_yaml_impl() const;
     
+    // flatbuffers
+    virtual flatbuffers::Offset<fb_serialize::Kernel> to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const;
+
     // hdf5
     void to_hdf5(HighFive::Group & group) const;
     virtual void to_hdf5_impl(HighFive::Group & group) const;

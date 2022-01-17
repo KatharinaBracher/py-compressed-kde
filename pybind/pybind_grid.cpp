@@ -158,6 +158,25 @@ void pybind_grid(py::module &m) {
         
     )pbdoc" )
     
+    .def(py::pickle(
+        &(pickle_get_state<Grid>),
+        [](py::tuple t) {
+            if (t.size() != 1)
+                throw std::runtime_error("Invalid state!");
+
+            char *buffer_pointer;
+            ssize_t length;
+            PYBIND11_BYTES_AS_STRING_AND_SIZE(
+                t[0].cast<py::bytes>().ptr(), &buffer_pointer, &length
+            );
+
+            // Get a pointer to the root object inside the buffer.
+            auto ptr = flatbuffers::GetRoot<fb_serialize::Grid>((uint8_t*)buffer_pointer);
+
+            return grid_from_flatbuffers(ptr);
+        }
+    ))
+
     .def("at_index", [](Grid & obj, py::array_t<unsigned int, py::array::c_style | py::array::forcecast> index) {
         unsigned int ndim = obj.ndim();
         unsigned int npoints;

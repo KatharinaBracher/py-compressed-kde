@@ -234,6 +234,11 @@ void pybind_decoder(py::module &m) {
         
     )pbdoc" )
     
+    .def(py::pickle(
+        &(pickle_get_state<Decoder>),
+        &(pickle_set_state<Decoder, fb_serialize::Decoder>)
+    ))
+
     .def("decode", [](Decoder & obj, std::vector<py::array_t<value, py::array::c_style | py::array::forcecast>> events, value delta_t, bool normalize)->std::vector<py::array_t<value>> {
         
         std::vector<py::array_t<value>> out;

@@ -199,6 +199,45 @@ std::unique_ptr<Grid> VectorGrid::from_yaml( const YAML::Node & node,
 }
 
 
+// flatbuffers
+std::vector<flatbuffers::Offset<fb_serialize::FloatArray>> VectorGrid::to_flatbuffers_data(flatbuffers::FlatBufferBuilder & builder) const {
+
+    std::vector<flatbuffers::Offset<fb_serialize::FloatArray>> floatarray_vector;
+
+    for (auto & k : vectors_) {
+        floatarray_vector.push_back(
+            fb_serialize::CreateFloatArray(
+                builder,
+                builder.CreateVector(k)
+            )
+        );
+    }
+
+    return floatarray_vector;
+}
+
+std::unique_ptr<VectorGrid> VectorGrid::from_flatbuffers(const fb_serialize::Grid * grid) {
+
+    auto space = SpaceSpecification::from_flatbuffers(grid->space());
+
+    auto tmp = grid->valid();
+    std::vector<bool> valid(tmp->begin(), tmp->end());
+
+    auto ndim = grid->data()->size();
+    std::vector<std::vector<value>> data(ndim);
+
+    for (unsigned int k=0; k<ndim; ++k) {
+        data[k].insert(
+            data[k].begin(),
+            grid->data()->Get(k)->data()->begin(),
+            grid->data()->Get(k)->data()->end()
+        );
+    }
+
+    return std::make_unique<VectorGrid>(data, space, valid);
+}
+
+
 // hdf5
 void VectorGrid::to_hdf5_impl(HighFive::Group & group) const {
     unsigned int dim = 0;

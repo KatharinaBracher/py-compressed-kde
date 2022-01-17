@@ -230,6 +230,51 @@ YAML::Node EuclideanSpace::to_yaml_impl() const {
     return node;
 }
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::SpaceData> EuclideanSpace::to_flatbuffers_impl(flatbuffers::FlatBufferBuilder & builder) const {
+
+    return fb_serialize::CreateSpaceData(
+        builder,
+        fb_serialize::SpaceType_EuclideanSpace,
+        fb_serialize::CreateEuclideanSpace(
+            builder,
+            builder.CreateVectorOfStrings(specification().names()),
+            kernel_->to_flatbuffers(builder)
+        ).Union()
+    );
+}
+
+std::unique_ptr<EuclideanSpace> EuclideanSpace::from_flatbuffers(const fb_serialize::Space * space) {
+
+    auto saved_klass = space->klass()->str();
+
+    if (saved_klass!="euclidean") {
+        throw std::runtime_error("Expected euclidean, but got " + saved_klass);
+    }
+
+    auto default_kernel = components_from_flatbuffers(space->default_kernel());
+
+    auto data = space->data()->value_as_EuclideanSpace();
+
+    std::vector<std::string> names;
+
+    for (auto k : *data->names()) {
+        names.push_back(
+            k->str()
+        );
+    }
+
+    std::unique_ptr<Kernel> k = kernel_from_flatbuffers(
+        data->kernel()
+    );
+
+    auto ptr = std::make_unique<EuclideanSpace>(names, *k);
+
+    ptr->set_default_kernel(*(default_kernel[0]));
+
+    return ptr;
+}
+
 
 // hdf5
 void EuclideanSpace::to_hdf5_impl(HighFive::Group & group) const {

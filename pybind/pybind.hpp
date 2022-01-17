@@ -4,6 +4,8 @@
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 
+#include "datatype_generated.h"
+
 namespace py = pybind11;
 
 template <class T>
@@ -33,3 +35,34 @@ enum Flags : unsigned {
         /// Derived open flag: Opens RW or exclusivelly creates
         OpenOrCreate = ReadWrite | Create
     };
+
+
+template <typename T>
+py::tuple pickle_get_state(const T &obj) {
+    flatbuffers::FlatBufferBuilder builder(1024);
+    auto f = obj.to_flatbuffers(builder);
+    builder.Finish(f);
+
+    uint8_t *buf = builder.GetBufferPointer();
+    int size = builder.GetSize();
+
+    return py::make_tuple(py::bytes((char*)buf,size));
+}
+
+template <typename T, typename S>
+std::unique_ptr<T> pickle_set_state(py::tuple t) {
+    if (t.size() != 1)
+        throw std::runtime_error("Invalid state!");
+
+    char *buffer_pointer;
+    ssize_t length;
+    PYBIND11_BYTES_AS_STRING_AND_SIZE(
+        t[0].cast<py::bytes>().ptr(), &buffer_pointer, &length
+    );
+
+    // Get a pointer to the root object inside the buffer.
+    auto ptr = flatbuffers::GetRoot<S>((uint8_t*)buffer_pointer);
+
+    /* Create a new C++ instance */
+    return T::from_flatbuffers(ptr);
+}

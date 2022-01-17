@@ -139,6 +139,47 @@ YAML::Node CategoricalSpace::to_yaml_impl() const {
     return node;
 }
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::SpaceData> CategoricalSpace::to_flatbuffers_impl(flatbuffers::FlatBufferBuilder & builder) const {
+
+    return fb_serialize::CreateSpaceData(
+        builder,
+        fb_serialize::SpaceType_CategoricalSpace,
+        fb_serialize::CreateCategoricalSpace(
+            builder,
+            builder.CreateString(specification().dim(0).name()),
+            builder.CreateVectorOfStrings(labels_)
+        ).Union()
+    );
+}
+
+std::unique_ptr<CategoricalSpace> CategoricalSpace::from_flatbuffers(const fb_serialize::Space * space) {
+
+    auto saved_klass = space->klass()->str();
+
+    if (saved_klass!="categorical") {
+        throw std::runtime_error("Expected categorical, but got " + saved_klass);
+    }
+
+    auto default_kernel = components_from_flatbuffers(space->default_kernel());
+
+    auto data = space->data()->value_as_CategoricalSpace();
+
+    std::string name = data->name()->str();
+
+    std::vector<std::string> labels;
+
+    for (auto k : *data->labels()) {
+        labels.push_back(k->str());
+    }
+
+    auto ptr = std::make_unique<CategoricalSpace>(name, labels);
+
+    ptr->set_default_kernel(*(default_kernel[0]));
+
+    return ptr;
+}
+
 
 // hdf5
 void CategoricalSpace::to_hdf5_impl(HighFive::Group & group) const {

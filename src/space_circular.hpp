@@ -55,6 +55,10 @@ public:
     static std::unique_ptr<CircularSpace> from_yaml( const YAML::Node & node );
     virtual YAML::Node to_yaml_impl() const;
     
+    // flatbuffers
+    flatbuffers::Offset<fb_serialize::SpaceData> to_flatbuffers_impl(flatbuffers::FlatBufferBuilder & builder) const;
+    static std::unique_ptr<CircularSpace> from_flatbuffers(const fb_serialize::Space * space);
+
     // hdf5
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     static std::unique_ptr<CircularSpace> from_hdf5(const HighFive::Group & group);
