@@ -6,6 +6,7 @@ from distutils.sysconfig import get_config_var, customize_compiler
 
 import glob
 import os
+import sys
 
 root_path = os.path.dirname(__file__)
 
@@ -36,16 +37,33 @@ class get_pybind_include(object):
   
 sources = glob.glob(os.path.abspath(os.path.join(root_path, '../pybind/*.cpp'))) + glob.glob(os.path.abspath(os.path.join(root_path, '../src/*.cpp')))
 
+include_dirs = [
+    os.path.abspath(os.path.join(root_path, '../src')), 
+    os.path.abspath(os.path.join(root_path, '../ext/HighFive-1.4/include')),
+    get_config_var('INCLUDEDIR'),
+    get_pybind_include(), get_pybind_include(user=True)
+]
+
+library_dirs = []
+
+if sys.platform.startswith('win'):
+    compile_args = ['/std:c++17', '-DH5_BUILT_AS_DYNAMIC_LIB', '/O2']
+    include_dirs.append(os.path.join(get_config_var('prefix'), 'Library', 'include'))
+    library_dirs.append(os.path.join(get_config_var('prefix'), 'Library', 'lib'))
+elif sys.platform.startswith('linux'):
+    compile_args = ['-std=c++17', '-O3']
+else:
+    compile_args = []
+
 extensions = [
     Extension(
         "compressed_kde.compressed_kde",
         sources = sources,
         libraries = ['yaml-cpp', 'hdf5'],
-        include_dirs = [os.path.abspath(os.path.join(root_path, '../src')), 
-                        os.path.abspath(os.path.join(root_path, '../ext/HighFive-1.4/include')),
-                        get_config_var('INCLUDEDIR'), get_pybind_include(), get_pybind_include(user=True)],
+        include_dirs = include_dirs,
+        library_dirs = library_dirs,
         language = "c++",
-        extra_compile_args = ['-std=c++17', '-O3'],
+        extra_compile_args = compile_args,
     )
 ]
 
