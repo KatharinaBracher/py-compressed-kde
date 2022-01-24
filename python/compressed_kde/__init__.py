@@ -11,6 +11,6 @@ Classes for compressed kernel density estimation.
 
 """
 
-from .compressed_kde import GaussianKernel, EpanechnikovKernel, BoxKernel, EuclideanSpace, CategoricalSpace, CircularSpace, EncodedSpace, MultiSpace, Mixture, PartialMixture
+from .compressed_kde import Grid, GaussianKernel, EpanechnikovKernel, BoxKernel, Space, EuclideanSpace, CategoricalSpace, CircularSpace, EncodedSpace, MultiSpace, Mixture, PartialMixture
 
 
