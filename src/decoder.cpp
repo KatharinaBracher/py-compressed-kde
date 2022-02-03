@@ -74,10 +74,6 @@ Decoder::Decoder( std::vector<std::vector<std::shared_ptr<PoissonLikelihood>>> &
             }
 
             // to do: check if likelihoods[source][index] has the same event space as likelihoods[source][0]
-            if ( ! (likelihoods[source][index]->stimulus()==likelihoods[0][index]->stimulus() ) ) {
-                throw std::runtime_error("Union likelihoods across sources need "
-                    "to have the same event size and space.");
-            }
         }
     }
     
