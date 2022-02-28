@@ -26,7 +26,7 @@
 
 #include "yaml-cpp/yaml.h"
 
-#include "datatype_generated.h"
+#include "schema_generated.h"
 
 // yaml
 std::unique_ptr<Kernel> kernel_from_yaml( const YAML::Node & node );

@@ -58,7 +58,7 @@ else:
     compile_args = []
 
 os.makedirs("../src/generated", exist_ok=True)
-os.system("flatc --cpp -o ../src/generated ../src/datatype.fbs")
+os.system("flatc --cpp -o ../src/generated ../src/schema.fbs")
 
 extensions = [
     Extension(

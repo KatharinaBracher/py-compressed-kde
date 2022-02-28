@@ -4,7 +4,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 
-#include "datatype_generated.h"
+#include "schema_generated.h"
 
 namespace py = pybind11;
 

@@ -23,7 +23,7 @@
 #include <highfive/H5File.hpp>
 #include "highfive/H5Group.hpp"
 
-#include "datatype_generated.h"
+#include "schema_generated.h"
 
 #include "yaml-cpp/yaml.h"
 #include <string>

@@ -49,18 +49,18 @@ include_directories( src )
 include_directories( ext/HighFive-1.4/include )
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/datatype_generated.h
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/datatype.fbs
-    COMMAND flatc --cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/datatype.fbs
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/schema_generated.h
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/schema.fbs
+    COMMAND flatc --cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/schema.fbs
 )
 
-add_custom_target(datatypebuffer DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/datatype_generated.h)
+add_custom_target(model_serialization DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/schema_generated.h)
 
 file(GLOB sources "src/*.cpp")
 file(GLOB header_files "src/*.hpp")
 
 add_library(compressed_decoder ${sources})
-add_dependencies(compressed_decoder datatypebuffer)
+add_dependencies(compressed_decoder model_serialization)
 target_link_libraries( compressed_decoder yaml-cpp flatbuffers ${HDF5_C_LIBRARIES})
 
 set(INCLUDE_INSTALL_ROOT_DIR ${CMAKE_INSTALL_PREFIX}/include)

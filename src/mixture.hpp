@@ -19,7 +19,7 @@
 #pragma once
 
 #include "space.hpp"
-#include "datatype_generated.h"
+#include "schema_generated.h"
 
 #include <vector>
 #include <memory>

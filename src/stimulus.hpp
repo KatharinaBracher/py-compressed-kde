@@ -22,7 +22,7 @@
 #include "space.hpp"
 #include "grid.hpp"
 #include "mixture.hpp"
-#include "datatype_generated.h"
+#include "schema_generated.h"
 
 #include <memory>
 #include <mutex>

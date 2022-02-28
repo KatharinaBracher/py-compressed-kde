@@ -23,7 +23,7 @@
 #include "grid.hpp"
 #include "mixture.hpp"
 #include "stimulus.hpp"
-#include "datatype_generated.h"
+#include "schema_generated.h"
 
 #include <memory>
 

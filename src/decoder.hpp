@@ -20,7 +20,7 @@
 
 #include "common.hpp"
 #include "likelihood.hpp"
-#include "datatype_generated.h"
+#include "schema_generated.h"
 
 #include <memory>
 
