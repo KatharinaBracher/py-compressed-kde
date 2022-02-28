@@ -47,7 +47,9 @@ public:
     friend bool operator==(const Space& lhs, const Space& rhs) {
         return lhs.specification()==rhs.specification();
     }
-    
+
+    virtual ~Space(){};
+
     // properties
     std::vector<bool> selection( const Space& space ) const;
     bool issubspace( const Space& space ) const;

@@ -46,7 +46,7 @@ public:
     
     // clone
     virtual Grid* clone() const;
-    
+    virtual ~Grid(){};
     // properties
     std::string klass() const;
     
