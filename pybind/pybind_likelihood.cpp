@@ -152,6 +152,11 @@ void pybind_likelihood(py::module &m) {
         
     )pbdoc" )
     
+    .def(py::pickle(
+        &(pickle_get_state<PoissonLikelihood>),
+        &(pickle_set_state<PoissonLikelihood, fb_serialize::PoissonLikelihood>)
+    ))
+
     .def("add_events", [](PoissonLikelihood & obj, py::array_t<value, py::array::c_style | py::array::forcecast> events, unsigned int repetitions) {
         
         unsigned int ndim = obj.ndim();

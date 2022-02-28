@@ -251,6 +251,59 @@ YAML::Node MultiSpace::to_yaml_impl() const {
 }
 
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::SpaceData> MultiSpace::to_flatbuffers_impl(flatbuffers::FlatBufferBuilder & builder) const {
+
+    std::vector<flatbuffers::Offset<fb_serialize::Space>> subspace_vector;
+
+    for (auto & k : spaces_) {
+        auto v = k->to_flatbuffers(builder);
+        subspace_vector.push_back(v);
+    }
+
+    auto subspaces = builder.CreateVector(subspace_vector);
+
+    return fb_serialize::CreateSpaceData(
+        builder,
+        fb_serialize::SpaceType_NONE,
+        0,
+        subspaces
+    );
+}
+
+std::unique_ptr<MultiSpace> MultiSpace::from_flatbuffers(const fb_serialize::Space * space) {
+
+    auto saved_klass = space->klass()->str();
+
+    if (saved_klass!="multi") {
+        throw std::runtime_error("Expected multi, but got " + saved_klass);
+    }
+
+    auto default_kernel = components_from_flatbuffers(space->default_kernel());
+
+    auto subspaces = space->data()->subspaces();
+
+    unsigned int nspace = subspaces->size();
+
+    std::vector<std::unique_ptr<Space>> s;
+
+    for (unsigned int k=0; k<nspace; ++k) {
+        s.push_back(std::move(space_from_flatbuffers(subspaces->Get(k))));
+    }
+
+    std::vector<const Space*> s_ptr;
+    for (auto & k : s) {
+        s_ptr.push_back( k.get() );
+    }
+
+    auto ptr = std::make_unique<MultiSpace>(s_ptr);
+
+    ptr->set_default_kernel(*(default_kernel[0]));
+
+    return ptr;
+}
+
+
 // hdf5
 void MultiSpace::to_hdf5_impl(HighFive::Group & group) const {
     unsigned int s = 0;

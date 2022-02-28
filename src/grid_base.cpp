@@ -171,6 +171,35 @@ void Grid::save_to_yaml( std::string path, bool flow ) const {
     std::ofstream fout(path); save_to_yaml(fout, flow);
 }
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::Grid> Grid::to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const{
+
+    auto data = this->to_flatbuffers_data(builder);
+    auto grids = this->to_flatbuffers_grids(builder);
+
+    auto fb_grid = fb_serialize::CreateGrid(
+        builder,
+        builder.CreateString(klass()),
+        spec_.to_flatbuffers(builder),
+        builder.CreateVector(shape_),
+        builder.CreateVector(valid_),
+        builder.CreateVector(data),
+        builder.CreateVector(grids)
+    );
+
+    return fb_grid;
+
+}
+
+std::vector<flatbuffers::Offset<fb_serialize::FloatArray>> Grid::to_flatbuffers_data(flatbuffers::FlatBufferBuilder & builder) const {
+    return {};
+}
+
+std::vector<flatbuffers::Offset<fb_serialize::Grid>> Grid::to_flatbuffers_grids(flatbuffers::FlatBufferBuilder & builder) const {
+    return {};
+}
+
+
 // hdf5
 void Grid::to_hdf5(HighFive::Group & group) const {
     

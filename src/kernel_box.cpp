@@ -123,6 +123,21 @@ std::unique_ptr<BoxKernel> BoxKernel::from_yaml( const YAML::Node & node ) {
     return std::make_unique<BoxKernel>();
 }
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::Kernel> BoxKernel::to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const {
+
+    return fb_serialize::CreateKernel(
+        builder,
+        builder.CreateString(kerneltype_tostring(type())),
+        fb_serialize::KernelType_BoxKernel,
+        fb_serialize::CreateBoxKernel(builder).Union()
+    );
+}
+
+std::unique_ptr<BoxKernel> BoxKernel::from_flatbuffers(const fb_serialize::BoxKernel * kernel) {
+    return std::make_unique<BoxKernel>();
+}
+
 // hdf5
 void BoxKernel::to_hdf5_impl(HighFive::Group & group) const {}
 

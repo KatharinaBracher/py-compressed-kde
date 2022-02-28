@@ -254,6 +254,42 @@ std::unique_ptr<Grid> MultiGrid::from_yaml( const YAML::Node & node,
 }
 
 
+// flatbuffers
+std::vector<flatbuffers::Offset<fb_serialize::Grid>> MultiGrid::to_flatbuffers_grids(flatbuffers::FlatBufferBuilder & builder) const {
+
+    std::vector<flatbuffers::Offset<fb_serialize::Grid>> grid_vector;
+
+    for (auto & k : grids_) {
+        grid_vector.push_back(
+            k->to_flatbuffers(builder)
+        );
+    }
+
+    return grid_vector;
+}
+
+std::unique_ptr<MultiGrid> MultiGrid::from_flatbuffers(const fb_serialize::Grid * grid) {
+
+    auto tmp = grid->valid();
+    std::vector<bool> valid(tmp->begin(), tmp->end());
+
+    unsigned int ndim = grid->grids()->size();
+
+    std::vector<std::unique_ptr<Grid>> g;
+
+    for (unsigned int k=0; k<ndim; ++k) {
+        g.push_back(std::move(grid_from_flatbuffers(grid->grids()->Get(k))));
+    }
+
+    std::vector<Grid*> ptr;
+    for (auto & k : g) {
+        ptr.push_back( k.get() );
+    }
+
+    return std::make_unique<MultiGrid>( ptr, valid );
+}
+
+
 // hdf5
 void MultiGrid::to_hdf5_impl(HighFive::Group & group) const {
     

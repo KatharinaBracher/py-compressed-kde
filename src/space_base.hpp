@@ -30,6 +30,8 @@
 
 #include "yaml-cpp/yaml.h"
 
+#include "schema_generated.h"
+
 #include <memory>
 #include <string>
 #include <fstream>
@@ -146,6 +148,10 @@ public:
     void save_to_yaml( std::ostream & stream, bool flow=false ) const;
     void save_to_yaml( std::string path, bool flow=false ) const;
     
+    // flatbuffers
+    flatbuffers::Offset<fb_serialize::Space> to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const;
+    virtual flatbuffers::Offset<fb_serialize::SpaceData> to_flatbuffers_impl(flatbuffers::FlatBufferBuilder & builder) const;
+
     // hdf5
     void to_hdf5(HighFive::Group & group) const;
     virtual void to_hdf5_impl(HighFive::Group & group) const;

@@ -20,6 +20,8 @@ void pybind_mixture(py::module &m) {
     )pbdoc")
     .def(py::init<const Space&, value>(), py::arg("space"), py::arg("threshold")=THRESHOLD)
     
+    .def_property_readonly("space", &Mixture::space, py::return_value_policy::reference_internal,
+    R"pbdoc(Mixture space.)pbdoc")
     .def_property_readonly("sum_of_weights", &Mixture::sum_of_weights,
     R"pbdoc(Sum of weights of all samples that were added to the density.)pbdoc")
     .def_property_readonly("sum_of_nsamples", &Mixture::sum_of_nsamples,
@@ -214,6 +216,11 @@ void pybind_mixture(py::module &m) {
         
     )pbdoc" )
     
+    .def(py::pickle(
+        &(pickle_get_state<Mixture>),
+        &(pickle_set_state<Mixture, fb_serialize::Mixture>)
+    ))
+
     .def("add", [](Mixture &m, py::array_t<value, py::array::c_style | py::array::forcecast> samples) {
         
         unsigned int ndim = m.space().ndim();

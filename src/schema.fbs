@@ -1,0 +1,127 @@
+namespace fb_serialize;
+
+table BoxKernel {}
+table EpanechnikovKernel {}
+table GaussianKernel {
+    cutoff:float64;
+}
+
+union KernelType { BoxKernel, EpanechnikovKernel, GaussianKernel }
+
+table Kernel {
+    type:string;
+    kernel:KernelType;
+}
+
+table Kernels {
+    ndim:uint64;
+    nbw:uint64;
+    nkernels:uint64;
+    locations:[float64];
+    bandwidth:[float64];
+}
+
+table CategoricalSpace {
+    name:string;
+    labels:[string];
+}
+
+table CircularSpace {
+    name:string;
+}
+table EncodedSpace {
+    name:string;
+    kernel:Kernel;
+    lut:[float64];
+    use_index:bool;
+    points:[float64];
+}
+table EuclideanSpace {
+    names:[string];
+    kernel:Kernel;
+}
+
+union SpaceType { CategoricalSpace, CircularSpace, EncodedSpace, EuclideanSpace }
+
+table SpaceData {
+    value:SpaceType;
+    subspaces:[Space];
+}
+
+table Space {
+    klass:string;
+    default_kernel:Kernels;
+    data:SpaceData;
+}
+
+table Mixture {
+    sum_of_weights:float64;
+    sum_of_nsamples:float64;
+    threshold:float64;
+    space:Space;
+    kernels:Kernels;
+    weights:[float64];
+}
+
+table FloatArray {
+    data:[float64];
+}
+
+table Dimension {
+    name:string;
+    type:string;
+    extra:string;
+}
+
+table SpaceSpecification {
+    dimensions: [Dimension];
+}
+
+table Grid {
+    klass:string;
+    space:SpaceSpecification;
+    shape:[uint64];
+    valid:[bool];
+    data:[FloatArray];
+    grids:[Grid];
+}
+
+table StimulusOccupancy {
+    stimulus_duration:float64;
+    compression:float64;
+    random_insertion:bool;
+    stimulus_distribution:Mixture;
+    stimulus_grid:Grid;
+}
+
+table PoissonLikelihood {
+    rate_scale:float64;
+    random_insertion:bool;
+    event_distribution:Mixture;
+    stimulus_distribution:StimulusOccupancy;
+}
+
+table StimulusMap {
+    key:uint64;
+    value:StimulusOccupancy;
+}
+
+table LikelihoodMap {
+    source:uint64;
+    union:uint64;
+    stimulus_key:uint64;
+    value:PoissonLikelihood;
+}
+
+table Prior {
+    data:[float64];
+}
+
+table Decoder {
+    nsources:uint64;
+    nunion:uint64;
+    stimuli:[StimulusMap];
+    likelihoods:[LikelihoodMap];
+    priors:[Prior];
+    selection:[bool];
+}

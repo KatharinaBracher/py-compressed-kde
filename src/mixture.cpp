@@ -442,6 +442,72 @@ std::unique_ptr<Mixture> Mixture::load_from_yaml( std::string path ) {
     return Mixture::from_yaml( node );
 }
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::Mixture> Mixture::to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const {
+
+    auto space = space_->to_flatbuffers(builder);
+
+    // kernels is Kernels table with locations and bandwidths fields
+    // it doesn't look like we can build vectors incrementally
+    // so we collect kernel locations/bandwidths in a single vector
+    std::vector<value> locations;
+    locations.reserve(space_->ndim() * kernels_.size());
+
+    std::vector<value> bandwidths;
+    bandwidths.reserve(space_->nbw() * kernels_.size());
+
+    for (auto & k : kernels_) {
+        locations.insert(locations.end(), k->location.begin(), k->location.end());
+        bandwidths.insert(bandwidths.end(), k->bandwidth.begin(), k->bandwidth.end());
+    }
+
+    auto kernels = fb_serialize::CreateKernels(
+        builder,
+        space_->ndim(),
+        space_->nbw(),
+        kernels_.size(),
+        builder.CreateVector(locations),
+        builder.CreateVector(bandwidths)
+    );
+
+    auto weights = builder.CreateVector(weights_);
+
+    fb_serialize::MixtureBuilder mixture_builder(builder);
+
+    mixture_builder.add_sum_of_weights(sum_of_weights_);
+    mixture_builder.add_sum_of_nsamples(sum_of_nsamples_);
+    mixture_builder.add_threshold(threshold_);
+    mixture_builder.add_space(space);
+    mixture_builder.add_kernels(kernels);
+    mixture_builder.add_weights(weights);
+
+    auto fb_mix = mixture_builder.Finish();
+
+    return fb_mix;
+}
+
+std::unique_ptr<Mixture> Mixture::from_flatbuffers(const fb_serialize::Mixture * mixture) {
+
+    auto threshold = mixture->threshold();
+    auto space = space_from_flatbuffers(mixture->space());
+
+    auto m = std::make_unique<Mixture>(*space, threshold);
+
+    m->sum_of_weights_ = mixture->sum_of_weights();
+    m->sum_of_nsamples_ = mixture->sum_of_nsamples();
+
+    auto weights = mixture->weights();
+    m->weights_.insert(m->weights_.begin(), weights->begin(), weights->end());
+
+    m->kernels_ = components_from_flatbuffers(mixture->kernels());
+
+    for (auto & k : m->kernels_) {
+        space->update_scale_factor(*k);
+    }
+
+    return m;
+}
+
 
 // hdf5
 void Mixture::to_hdf5(HighFive::Group & group) const {

@@ -60,6 +60,22 @@ std::unique_ptr<Grid> load_grid_from_yaml( std::string path ) {
     
 }
 
+// flatbuffers
+std::unique_ptr<Grid> grid_from_flatbuffers( const fb_serialize::Grid * grid ) {
+
+    std::string klass = grid->klass()->str();
+
+    if (klass=="multi") {
+        return MultiGrid::from_flatbuffers(grid);
+    } else if (klass=="vector") {
+        return VectorGrid::from_flatbuffers(grid);
+    } else if (klass=="array") {
+        return ArrayGrid::from_flatbuffers(grid);
+    } else {
+        throw std::runtime_error("Unknown grid.");
+    }
+}
+
 // hdf5
 std::unique_ptr<Grid> grid_from_hdf5( const HighFive::Group & group ) {
     

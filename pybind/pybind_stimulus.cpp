@@ -110,6 +110,11 @@ void pybind_stimulus(py::module &m) {
         
     )pbdoc" )
     
+    .def(py::pickle(
+        &(pickle_get_state<StimulusOccupancy>),
+        &(pickle_set_state<StimulusOccupancy, fb_serialize::StimulusOccupancy>)
+    ))
+
     .def("add_stimuli", [](StimulusOccupancy & obj, py::array_t<value, py::array::c_style | py::array::forcecast> stimuli, unsigned int repetitions) {
         
         unsigned int ndim = obj.ndim();

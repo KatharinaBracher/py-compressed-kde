@@ -90,6 +90,11 @@ YAML::Node Kernel::to_yaml_impl() const {
     throw std::runtime_error("Not implemented.");
 }
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::Kernel> Kernel::to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const {
+    throw std::runtime_error("Not implemented.");
+}
+
 
 // hdf5
 void Kernel::to_hdf5(HighFive::Group & group) const {

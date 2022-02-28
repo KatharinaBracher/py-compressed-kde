@@ -356,6 +356,154 @@ void Decoder::enable_sources( const std::vector<bool> & state ) {
     
 }
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::Decoder> Decoder::to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const {
+
+    // stimuli and likelihoods
+    // stimuli is a vector of StimulusMap tables that contain key and value fields
+    // likelihoods is a vector of LikelihoodMap tables that contain key, stimulus and value fields
+    std::vector<flatbuffers::Offset<fb_serialize::StimulusMap>> stimuli_vector;
+    std::vector<flatbuffers::Offset<fb_serialize::LikelihoodMap>> likelihoods_vector;
+
+    std::map<uint64_t, std::shared_ptr<StimulusOccupancy>> stim_map;
+    
+    bool found;
+    uint64_t next_key = 0;
+    uint64_t key;
+    
+    for (unsigned int u=0; u<n_union(); ++u) {
+        
+        for (unsigned int s=0; s<nsources(); ++s) {
+
+            key = next_key;
+            found = false;
+
+            // is stimulus already saved?
+            for (auto & it : stim_map) {
+                if (it.second == likelihoods_[s][u]->stimulus()) {
+                    key = it.first;
+                    found = true;
+                    break;
+                }
+            }
+
+            // if no: save stimulus and add to map
+            if (!found) {
+                stim_map[key] = likelihoods_[s][u]->stimulus();
+
+                stimuli_vector.push_back(
+                    fb_serialize::CreateStimulusMap(
+                        builder,
+                        key,
+                        stim_map[key]->to_flatbuffers(builder)
+                    )
+                );
+
+                next_key++;
+            }
+
+            // save likelihood (without stimulus)
+            likelihoods_vector.push_back(
+                fb_serialize::CreateLikelihoodMap(
+                    builder,
+                    s, u,
+                    key,
+                    likelihoods_[s][u]->to_flatbuffers(builder, false)
+                )
+            );
+        }
+    }
+
+    auto stimuli = builder.CreateVector(stimuli_vector);
+    auto likelihoods = builder.CreateVector(likelihoods_vector);
+
+    // priors: vector of Prior tables that contain data:[float64]
+    std::vector<flatbuffers::Offset<fb_serialize::Prior>> priors_vector;
+    for (auto & k : prior_) {
+        priors_vector.push_back(
+            fb_serialize::CreatePrior(
+                builder,
+                builder.CreateVector(k)
+            )
+        );
+    }
+    auto priors = builder.CreateVector(priors_vector);
+
+    auto select = builder.CreateVector(likelihood_selection_);
+
+    fb_serialize::DecoderBuilder decoder_builder(builder);
+
+    decoder_builder.add_nsources(nsources());
+    decoder_builder.add_nunion(n_union());
+    decoder_builder.add_stimuli(stimuli);
+    decoder_builder.add_likelihoods(likelihoods);
+    decoder_builder.add_priors(priors);
+    decoder_builder.add_selection(select);
+
+    auto fb_decoder = decoder_builder.Finish();
+
+    return fb_decoder;
+}
+
+std::unique_ptr<Decoder> Decoder::from_flatbuffers(const fb_serialize::Decoder * decoder) {
+
+    auto nsources = decoder->nsources();
+    auto nunion = decoder->nunion();
+
+    auto &stimuli = *decoder->stimuli();
+
+    // load map of stimuli
+    std::map<uint64_t, std::shared_ptr<StimulusOccupancy>> stim_map;
+
+    for (auto k : stimuli) {
+        std::shared_ptr<StimulusOccupancy> stim = StimulusOccupancy::from_flatbuffers(k->value());
+        stim_map[k->key()] = stim;
+    }
+
+    // for each union element, go over all sources
+    // load path to stimulus
+    // load likelihood (and supply corresponding stimulus)
+    std::vector<std::vector<std::shared_ptr<PoissonLikelihood>>> likelihoods(nsources);
+
+    // make sure nested vectors have correct number of items
+    for (auto & v : likelihoods) {
+        v.resize(nunion);
+    }
+
+    auto &lhoods = *decoder->likelihoods();
+
+    for (auto k : lhoods) {
+        std::shared_ptr<PoissonLikelihood> L = PoissonLikelihood::from_flatbuffers(k->value(), stim_map[k->stimulus_key()]);
+        likelihoods[k->source()][k->union_()] = L;
+    }
+
+    // load priors
+    std::vector<std::vector<value>> priors(nunion);
+
+    auto p = decoder->priors();
+
+    for (unsigned int k=0; k<nunion; ++k) {
+        priors[k].insert(
+            priors[k].begin(),
+            p->Get(k)->data()->begin(),
+            p->Get(k)->data()->end()
+        );
+    }
+
+    // create Decoder object
+    auto dec = std::make_unique<Decoder>(likelihoods, priors);
+
+    // load likelihood selection
+    auto sel = decoder->selection();
+    std::vector<bool> selection(sel->begin(), sel->end());
+
+    // set likelihood selection
+    dec->enable_sources(selection);
+
+    return dec;
+}
+
+
 // hdf5
 void Decoder::to_hdf5(HighFive::Group & group) const {
     

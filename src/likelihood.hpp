@@ -23,6 +23,7 @@
 #include "grid.hpp"
 #include "mixture.hpp"
 #include "stimulus.hpp"
+#include "schema_generated.h"
 
 #include <memory>
 
@@ -83,6 +84,10 @@ public:
     static std::unique_ptr<PoissonLikelihood> from_yaml(const YAML::Node & node, 
         std::shared_ptr<StimulusOccupancy> stimulus = nullptr);
     
+    // flatbuffers
+    flatbuffers::Offset<fb_serialize::PoissonLikelihood> to_flatbuffers(flatbuffers::FlatBufferBuilder &builder, bool save_stimulus=true) const;
+    static std::unique_ptr<PoissonLikelihood> from_flatbuffers(const fb_serialize::PoissonLikelihood * likelihood, std::shared_ptr<StimulusOccupancy> stimulus = nullptr);
+
     // hdf5
     void to_hdf5(HighFive::Group & group, bool save_stimulus=true) const;
     

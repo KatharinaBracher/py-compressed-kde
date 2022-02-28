@@ -29,6 +29,8 @@
 #include <highfive/H5File.hpp>
 #include "highfive/H5Group.hpp"
 
+#include "schema_generated.h"
+
 #include <vector>
 
 struct Component {
@@ -45,3 +47,7 @@ struct Component {
     void to_hdf5(HighFive::Group & group) const;
     static std::unique_ptr<Component> from_hdf5(const HighFive::Group & group);
 };
+
+std::vector<std::unique_ptr<Component>> components_from_flatbuffers(
+    const fb_serialize::Kernels * kernels
+);

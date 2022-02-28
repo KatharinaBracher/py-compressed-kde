@@ -40,6 +40,23 @@ std::unique_ptr<Kernel> kernel_from_yaml( const YAML::Node & node ) {
 
 }
 
+// flatbuffer
+std::unique_ptr<Kernel> kernel_from_flatbuffers(const fb_serialize::Kernel * kernel) {
+
+    std::string type_str = kernel->type()->str();
+    KernelType ktype = kerneltype_fromstring( type_str );
+
+    if (ktype == KernelType::Gaussian) {
+        return GaussianKernel::from_flatbuffers(kernel->kernel_as_GaussianKernel());
+    } else if (ktype == KernelType::Epanechnikov) {
+        return EpanechnikovKernel::from_flatbuffers(kernel->kernel_as_EpanechnikovKernel());
+    } else if (ktype == KernelType::Box) {
+        return BoxKernel::from_flatbuffers(kernel->kernel_as_BoxKernel());
+    } else {
+        throw std::runtime_error("Unknown kernel type: "+type_str);
+    }
+}
+
 
 // hdf5
 std::unique_ptr<Kernel> kernel_from_hdf5( const HighFive::Group & group ) {

@@ -123,6 +123,21 @@ std::unique_ptr<EpanechnikovKernel> EpanechnikovKernel::from_yaml(
 }
 
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::Kernel> EpanechnikovKernel::to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const {
+
+    return fb_serialize::CreateKernel(
+        builder,
+        builder.CreateString(kerneltype_tostring(type())),
+        fb_serialize::KernelType_EpanechnikovKernel,
+        fb_serialize::CreateEpanechnikovKernel(builder).Union()
+    );
+}
+
+std::unique_ptr<EpanechnikovKernel> EpanechnikovKernel::from_flatbuffers(const fb_serialize::EpanechnikovKernel * kernel) {
+    return std::make_unique<EpanechnikovKernel>();
+}
+
 // hdf5
 void EpanechnikovKernel::to_hdf5_impl(HighFive::Group & group) const {}
 

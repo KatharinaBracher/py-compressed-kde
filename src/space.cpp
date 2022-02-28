@@ -64,6 +64,31 @@ std::unique_ptr<Space> load_space_from_yaml( std::string path ) {
     
 }
 
+
+std::unique_ptr<Space> space_from_flatbuffers(const fb_serialize::Space * space ) {
+
+    std::unique_ptr<Space> ptr;
+    
+    std::string klass = space->klass()->str();
+    
+    if (klass=="multi") {
+        ptr = MultiSpace::from_flatbuffers(space);
+    } else if (klass=="euclidean") {
+        ptr = EuclideanSpace::from_flatbuffers(space);
+    } else if (klass=="categorical") {
+        ptr = CategoricalSpace::from_flatbuffers(space);
+    } else if (klass=="circular") {
+        ptr = CircularSpace::from_flatbuffers(space);
+    } else if (klass=="encoded") {
+        ptr = EncodedSpace::from_flatbuffers(space);
+    } else {
+        throw std::runtime_error("Cannot create Space from flatbuffers: unknown class " + klass);
+    }
+
+    return ptr;
+}
+
+
 // hdf5
 std::unique_ptr<Space> space_from_hdf5(const HighFive::Group & group) {
     

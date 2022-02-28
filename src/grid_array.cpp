@@ -214,6 +214,36 @@ std::unique_ptr<Grid> ArrayGrid::from_yaml(const YAML::Node & node,
     return std::make_unique<ArrayGrid>( a, space, valid, shape );
 }
 
+// flatbuffers
+std::vector<flatbuffers::Offset<fb_serialize::FloatArray>> ArrayGrid::to_flatbuffers_data(flatbuffers::FlatBufferBuilder & builder) const {
+
+    std::vector<flatbuffers::Offset<fb_serialize::FloatArray>> floatarray_vector;
+
+    floatarray_vector.push_back(
+        fb_serialize::CreateFloatArray(
+            builder,
+            builder.CreateVector(array_)
+        )
+    );
+
+    return floatarray_vector;
+}
+
+std::unique_ptr<ArrayGrid> ArrayGrid::from_flatbuffers(const fb_serialize::Grid * grid) {
+
+    auto space = SpaceSpecification::from_flatbuffers(grid->space());
+
+    auto tmp = grid->valid();
+    std::vector<bool> valid(tmp->begin(), tmp->end());
+
+    auto tmp_shape = grid->shape();
+    std::vector<long unsigned int> shape(tmp_shape->begin(), tmp_shape->end());
+
+    auto tmp_data = grid->data()->Get(0)->data();
+    std::vector<value> data(tmp_data->begin(), tmp_data->end());
+
+    return std::make_unique<ArrayGrid>(data, space, valid, shape);
+}
 
 // hdf5
 void ArrayGrid::to_hdf5_impl(HighFive::Group & group) const {

@@ -176,6 +176,41 @@ std::unique_ptr<StimulusOccupancy> StimulusOccupancy::from_yaml(
     return stim;
 }
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::StimulusOccupancy> StimulusOccupancy::to_flatbuffers(flatbuffers::FlatBufferBuilder &builder) const {
+
+    auto stim = stimulus_distribution_->to_flatbuffers(builder);
+    auto grid = stimulus_grid_->to_flatbuffers(builder);
+
+    return fb_serialize::CreateStimulusOccupancy(
+        builder,
+        stimulus_duration_,
+        compression_,
+        random_insertion_,
+        stim,
+        grid
+    );
+}
+
+std::unique_ptr<StimulusOccupancy> StimulusOccupancy::from_flatbuffers(const fb_serialize::StimulusOccupancy * stimulus) {
+
+    auto duration = stimulus->stimulus_duration();
+    auto compression = stimulus->compression();
+    auto random_insertion = stimulus->random_insertion();
+
+    auto grid = grid_from_flatbuffers(stimulus->stimulus_grid());
+
+    auto mix = Mixture::from_flatbuffers(stimulus->stimulus_distribution());
+
+    auto stim = std::make_unique<StimulusOccupancy>(mix->space(), *grid, 
+        duration, compression);
+
+    stim->set_random_insertion(random_insertion);
+    stim->stimulus_distribution_ = std::move(mix);
+
+    return stim;
+}
+
 
 // hdf5
 void StimulusOccupancy::to_hdf5(HighFive::Group & group) const {

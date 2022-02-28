@@ -195,6 +195,41 @@ YAML::Node CircularSpace::to_yaml_impl() const {
 }
 
 
+// flatbuffers
+flatbuffers::Offset<fb_serialize::SpaceData> CircularSpace::to_flatbuffers_impl(flatbuffers::FlatBufferBuilder & builder) const {
+
+    return fb_serialize::CreateSpaceData(
+        builder,
+        fb_serialize::SpaceType_CircularSpace,
+        fb_serialize::CreateCircularSpace(
+            builder,
+            builder.CreateString(specification().dim(0).name())
+        ).Union()
+    );
+}
+
+std::unique_ptr<CircularSpace> CircularSpace::from_flatbuffers(const fb_serialize::Space * space) {
+
+    auto saved_klass = space->klass()->str();
+
+    if (saved_klass!="circular") {
+        throw std::runtime_error("Expected circular, but got " + saved_klass);
+    }
+
+    auto default_kernel = components_from_flatbuffers(space->default_kernel());
+
+    auto data = space->data()->value_as_CircularSpace();
+
+    std::string name = data->name()->str();
+
+    auto ptr = std::make_unique<CircularSpace>(name);
+
+    ptr->set_default_kernel(*(default_kernel[0]));
+
+    return ptr;
+}
+
+
 // hdf5
 void CircularSpace::to_hdf5_impl(HighFive::Group & group) const {
     std::string name = specification().dim(0).name();

@@ -62,6 +62,10 @@ public:
     static std::unique_ptr<Grid> from_yaml( const YAML::Node & node, 
         const SpaceSpecification & space, const std::vector<bool> & valid );
     
+    // flatbuffers
+    virtual std::vector<flatbuffers::Offset<fb_serialize::Grid>> to_flatbuffers_grids(flatbuffers::FlatBufferBuilder & builder) const;
+    static std::unique_ptr<MultiGrid> from_flatbuffers(const fb_serialize::Grid * grid);
+
     // hdf5
     virtual void to_hdf5_impl(HighFive::Group & group) const;
     static std::unique_ptr<Grid> from_hdf5(const HighFive::Group & group, 

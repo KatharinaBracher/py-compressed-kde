@@ -27,6 +27,9 @@
 std::unique_ptr<Grid> grid_from_yaml( const YAML::Node & node );
 std::unique_ptr<Grid> load_grid_from_yaml( std::string path );
 
+// flatbuffers
+std::unique_ptr<Grid> grid_from_flatbuffers(const fb_serialize::Grid * grid );
+
 // hdf5
 std::unique_ptr<Grid> grid_from_hdf5( const HighFive::Group & group );
 
