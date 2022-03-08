@@ -10,18 +10,13 @@ project(DECODER)
 
 include(FetchContent)
 
+####### Add flatbuffers lib ########
+
 FetchContent_Declare(
     flatbuffers
     GIT_REPOSITORY "https://github.com/google/flatbuffers"
     GIT_TAG        v2.0.0
 )
-
-FetchContent_Declare(
-		yaml-cpp
-		GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-		GIT_SHALLOW	ON
-		GIT_TAG yaml-cpp-0.6.3
-    )
 
 set(FLATBUFFERS_BUILD_FLATC ON CACHE INTERNAL "Enable the build of the flatbuffers compiler")
 set(FLATBUFFERS_BUILD_TESTS OFF CACHE INTERNAL "Enable tests from flatbuffers lib.")
@@ -37,23 +32,47 @@ FetchContent_MakeAvailable(flatbuffers)
 
 include_directories(BEFORE SYSTEM "${flatbuffers_SOURCE_DIR}/include")
 
+####### Add yaml cpp lib ########
+
+FetchContent_Declare(
+    yaml-cpp
+    GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+    GIT_SHALLOW	ON
+    GIT_TAG yaml-cpp-0.6.3
+   )
+
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "disable yaml tests")
 message(STATUS "Populating yaml-cpp...")
 FetchContent_MakeAvailable(yaml-cpp)
 message(STATUS "Done.")
+
+####### Add HighFive lib ########
+
+FetchContent_Declare(
+    HighFive
+    GIT_REPOSITORY "https://github.com/BlueBrain/HighFive"
+    GIT_TAG        v2.3.1
+)
+set(HIGHFIVE_EXAMPLES OFF CACHE INTERNAL "")
+set(HIGHFIVE_BUILD_DOCS OFF CACHE INTERNAL "")
+set(HIGHFIVE_UNIT_TESTS OFF CACHE INTERNAL "")
+set(HIGHFIVE_USE_BOOST OFF CACHE INTERNAL "")
+
+FetchContent_MakeAvailable(HighFive)
+include_directories(BEFORE SYSTEM "${HighFive_SOURCE_DIR}/include" )
+
 find_package(HDF5 REQUIRED)
 
 include_directories( ${HDF5_INCLUDE_DIRS} )
 include_directories( ${YAML_CPP_INCLUDE_DIR} )
 include_directories( src )
-include_directories( ext/HighFive-1.4/include )
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/schema_generated.h
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/schema.fbs
     COMMAND flatc --cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/schema.fbs
 )
-
 add_custom_target(model_serialization DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/schema_generated.h)
 
 file(GLOB sources "src/*.cpp")

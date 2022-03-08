@@ -35,13 +35,25 @@ class get_pybind_include(object):
     def __str__(self):
         import pybind11
         return pybind11.get_include(self.user)
-  
-sources = glob.glob(os.path.abspath(os.path.join(root_path, '../pybind/*.cpp'))) + glob.glob(os.path.abspath(os.path.join(root_path, '../src/*.cpp')))
+    
+src_path =  os.path.abspath(os.path.join(root_path, '../src'))
+generated_path = os.path.join(src_path, 'generated')
+hgf_path = os.path.join(generated_path, 'HighFive')
+
+schema_path = os.path.join(src_path, 'schema.fbs')
+
+import shutil
+shutil.rmtree(generated_path)
+os.makedirs(generated_path, exist_ok=True)
+os.system(f"flatc --cpp -o {generated_path} {schema_path}")
+os.system(f"git clone --depth 1 --quiet --branch v2.3.1 -c advice.detachedHead=false https://github.com/BlueBrain/HighFive.git {hgf_path}")
+
+sources = glob.glob(os.path.abspath(os.path.join(root_path, '../pybind/*.cpp'))) + glob.glob(os.path.join(src_path, '*.cpp'))
 
 include_dirs = [
-    os.path.abspath(os.path.join(root_path, '../src')), 
-    os.path.abspath(os.path.join(root_path, '../src/generated')),
-    os.path.abspath(os.path.join(root_path, '../ext/HighFive-1.4/include')),
+    src_path, 
+    generated_path,
+    os.path.join(hgf_path, 'include'),
     get_config_var('INCLUDEDIR'),
     get_pybind_include(), get_pybind_include(user=True)
 ]
@@ -57,8 +69,6 @@ elif sys.platform.startswith('linux'):
 else:
     compile_args = []
 
-os.makedirs("../src/generated", exist_ok=True)
-os.system("flatc --cpp -o ../src/generated ../src/schema.fbs")
 
 extensions = [
     Extension(
