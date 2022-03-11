@@ -42,8 +42,11 @@ hgf_path = os.path.join(generated_path, 'HighFive')
 
 schema_path = os.path.join(src_path, 'schema.fbs')
 
-import shutil
-shutil.rmtree(generated_path)
+
+if os.path.exists(generated_path):
+    import shutil
+    shutil.rmtree(generated_path)
+    
 os.makedirs(generated_path, exist_ok=True)
 os.system(f"flatc --cpp -o {generated_path} {schema_path}")
 os.system(f"git clone --depth 1 --quiet --branch v2.3.1 -c advice.detachedHead=false https://github.com/BlueBrain/HighFive.git {hgf_path}")
