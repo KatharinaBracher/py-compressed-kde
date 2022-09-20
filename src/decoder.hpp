@@ -23,6 +23,40 @@
 
 #include <memory>
 
+inline std::vector<std::vector<value>> load_prior_from_file(std::string filename, std::string path = ""){
+    HighFive::File file(filename, HighFive::File::ReadOnly);
+    unsigned int nunion;
+    if (path.empty()) {
+        path = "/";
+    }
+
+    HighFive::Group group = file.getGroup(path);
+    // load priors
+    group.getDataSet("nunion").read(nunion);
+    std::vector<std::vector<value>> priors(nunion);
+
+    HighFive::Group grp_priors = group.getGroup("priors");
+
+    for (unsigned int k=0; k<nunion; ++k) {
+        grp_priors.getDataSet("prior" + std::to_string(k)).read(priors[k]);
+    }
+    return priors;
+};
+/**
+ * @brief compute_posterior based on likelihood result with multiple stimulus spaces (unions)
+ * @param result number of unions x grid size
+ * @param normalize
+ */
+void compute_posterior(std::vector<value *> result,
+                       std::vector<std::vector<value>> prior,
+                       std::vector<unsigned int> grid_sizes, bool normalize);
+/**
+ * @brief compute_posterior based on likelihood result with 1 stimulus space
+ * @param result - grid size
+ * @param normalize
+ */
+void compute_posterior(value * result, std::vector<value> prior, unsigned int grid_size, bool normalize);
+
 class Decoder {
 public:
     // constructors
@@ -99,19 +133,7 @@ public:
     void decode ( std::vector<std::vector<value>> events, value delta_t,
         value* result, unsigned int index=0, bool normalize=true );
 
-    /**
-     * @brief compute_posterior based on likelihood result with multiple stimulus spaces (unions)
-     * @param result number of unions x grid size
-     * @param normalize
-     */
-    void compute_posterior(std::vector<value *>  result, bool normalize);
 
-    /**
-     * @brief compute_posterior based on likelihood result with 1 stimulus space
-     * @param result - grid size
-     * @param normalize
-     */
-    void compute_posterior(value * result,  unsigned int index, bool normalize);
     // properties
     unsigned int nsources() const;
     bool is_union() const;

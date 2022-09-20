@@ -299,7 +299,7 @@ void pybind_decoder(py::module &m) {
         list with posterior distribution for each of the union-ed stimulus spaces.
         
     )pbdoc")
-    .def("compute_posterior", [](Decoder & obj, py::array_t<value> events, bool normalize)->py::array_t<value> {
+/*    .def("compute_posterior", [](Decoder & obj, py::array_t<value> events, bool normalize)->py::array_t<value> {
 
         obj.compute_posterior( (value*) events.request().ptr, 0, normalize );
 
@@ -322,7 +322,7 @@ void pybind_decoder(py::module &m) {
         -------
         list with posterior distribution for each of the union-ed stimulus spaces.
 
-    )pbdoc")
+    )pbdoc")*/
     .def("decode_single", [](Decoder & obj, std::vector<py::array_t<value, py::array::c_style | py::array::forcecast>> events, value delta_t, unsigned int index, bool normalize)->py::array_t<value> {
         
         std::vector<long unsigned int> strides(obj.grid_shape(index).size(), sizeof(value));
