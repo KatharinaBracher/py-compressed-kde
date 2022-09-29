@@ -18,6 +18,68 @@
 // ---------------------------------------------------------------------
 #include "decoder.hpp"
 
+void compute_posterior(std::vector<value *> result,
+                       std::vector<std::vector<value>> prior,
+                       std::vector<unsigned int> grid_sizes, bool normalize){
+
+    // add log prior
+    for (unsigned int index=0; index<result.size(); ++index) {
+        if (prior[index].size()>0) {
+            std::transform( result[index], result[index]+prior[index].size(), prior[index].data(), result[index], std::plus<value>() );
+        }
+    }
+
+    // normalize across union
+    if (normalize) {
+
+        // find maximum across union
+        value max = *std::max_element( result[0], result[0] + grid_sizes[0] );
+        for (unsigned int index=1; index<result.size(); ++index) {
+            max = std::max( max, *std::max_element( result[index], result[index] + grid_sizes[index] ) );
+        }
+
+        // compute exp( x - max )
+        for (unsigned int index=0; index<result.size(); ++index) {
+            std::transform( result[index], result[index] + grid_sizes[index], result[index], [max]( const value & a ) { return fastexp( a - max ); } );
+        }
+
+        // compute sum across union
+        value sum = 0.;
+        for (unsigned int index=0; index<result.size(); ++index) {
+            sum += std::accumulate( result[index], result[index] + grid_sizes[index], 0. );
+        }
+
+        // divide by sum
+        for (unsigned int index=0; index<result.size(); ++index) {
+            std::transform( result[index], result[index] + grid_sizes[index], result[index], [sum]( const value & a ) { return a/sum; } );
+        }
+
+    }
+
+}
+
+void compute_posterior(value * result,
+                       std::vector<value> prior,
+                       unsigned int grid_size, bool normalize){
+    // add log prior
+    if (prior.size()>0) {
+        std::transform( result, result+prior.size(), prior.data(), result, std::plus<value>() );
+    }
+
+    // normalize
+    if (normalize) {
+
+        // find maximum
+        value max = *std::max_element( result, result + grid_size );
+        // compute exp( x - max )
+        std::transform( result, result + grid_size, result, [max]( const value & a ) { return fastexp( a - max ); } );
+        // compute sum
+        value sum = std::accumulate( result, result + grid_size, 0. );
+        // divide by sum
+        std::transform( result, result + grid_size, result, [sum]( const value & a ) { return a/sum; } );
+    }
+}
+
 // constructors
 Decoder::Decoder( std::vector<std::shared_ptr<PoissonLikelihood>> & likelihoods, 
     const std::vector<value> & prior )
@@ -88,45 +150,6 @@ Decoder::Decoder( std::vector<std::vector<std::shared_ptr<PoissonLikelihood>>> &
     
     likelihood_selection_.assign( nsources, true );
 }
-void compute_posterior(std::vector<value *> result,
-                       std::vector<std::vector<value>> prior,
-                       std::vector<unsigned int> grid_sizes, bool normalize){
-
-    // add log prior
-    for (unsigned int index=0; index<result.size(); ++index) {
-        if (prior[index].size()>0) {
-            std::transform( result[index], result[index]+prior[index].size(), prior[index].data(), result[index], std::plus<value>() );
-        }
-    }
-
-    // normalize across union
-    if (normalize) {
-
-        // find maximum across union
-        value max = *std::max_element( result[0], result[0] + grid_sizes[0] );
-        for (unsigned int index=1; index<result.size(); ++index) {
-            max = std::max( max, *std::max_element( result[index], result[index] + grid_sizes[index] ) );
-        }
-
-        // compute exp( x - max )
-        for (unsigned int index=0; index<result.size(); ++index) {
-            std::transform( result[index], result[index] + grid_sizes[index], result[index], [max]( const value & a ) { return fastexp( a - max ); } );
-        }
-
-        // compute sum across union
-        value sum = 0.;
-        for (unsigned int index=0; index<result.size(); ++index) {
-            sum += std::accumulate( result[index], result[index] + grid_sizes[index], 0. );
-        }
-
-        // divide by sum
-        for (unsigned int index=0; index<result.size(); ++index) {
-            std::transform( result[index], result[index] + grid_sizes[index], result[index], [sum]( const value & a ) { return a/sum; } );
-        }
-
-    }
-
-}
 
 // decoding methods
 void Decoder::decode( std::vector<value*> events, std::vector<unsigned int> nevents, 
@@ -161,25 +184,6 @@ void Decoder::decode( std::vector<value*> events, std::vector<unsigned int> neve
 
 }
 
-void compute_posterior(value * result, std::vector<value> prior, unsigned int grid_size, bool normalize){
-    // add log prior
-    if (prior.size()>0) {
-        std::transform( result, result+prior.size(), prior.data(), result, std::plus<value>() );
-    }
-
-    // normalize
-    if (normalize) {
-
-        // find maximum
-        value max = *std::max_element( result, result + grid_size );
-        // compute exp( x - max )
-        std::transform( result, result + grid_size, result, [max]( const value & a ) { return fastexp( a - max ); } );
-        // compute sum
-        value sum = std::accumulate( result, result + grid_size, 0. );
-        // divide by sum
-        std::transform( result, result + grid_size, result, [sum]( const value & a ) { return a/sum; } );
-    }
-}
 void Decoder::decode ( std::vector<std::vector<value>> events, value delta_t,
     std::vector<value*> result, bool normalize ) {
 
@@ -225,8 +229,6 @@ void Decoder::decode( std::vector<value*> events, std::vector<unsigned int> neve
     compute_posterior(result, prior_[index], grid_sizes_[index], normalize);
 }
 
-
-    
 void Decoder::decode ( std::vector<std::vector<value>> events, value delta_t, 
     value* result, unsigned int index, bool normalize ) {
     
