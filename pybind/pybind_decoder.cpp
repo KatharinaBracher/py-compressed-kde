@@ -3,7 +3,6 @@
 #include "decoder.hpp"
 
 void pybind_decoder(py::module &m) {
-    
     py::class_<Decoder>(m, "Decoder",
     R"pbdoc(
         Decoder class.
@@ -299,30 +298,6 @@ void pybind_decoder(py::module &m) {
         list with posterior distribution for each of the union-ed stimulus spaces.
         
     )pbdoc")
-/*    .def("compute_posterior", [](Decoder & obj, py::array_t<value> events, bool normalize)->py::array_t<value> {
-
-        obj.compute_posterior( (value*) events.request().ptr, 0, normalize );
-
-        return events;
-
-    }, py::arg("events"), py::arg("normalize")=true,
-    R"pbdoc(
-        decode(events, delta, normalize) -> [array,]
-
-        Compute posterior probability distribution.
-
-        Parameters
-        ----------
-        events : list of (n,ndim) arrays
-            A list with for each source the observed event data.
-        normalize : bool
-            Normalize posterior distribution such that is sums to one.
-
-        Returns
-        -------
-        list with posterior distribution for each of the union-ed stimulus spaces.
-
-    )pbdoc")*/
     .def("decode_single", [](Decoder & obj, std::vector<py::array_t<value, py::array::c_style | py::array::forcecast>> events, value delta_t, unsigned int index, bool normalize)->py::array_t<value> {
         
         std::vector<long unsigned int> strides(obj.grid_shape(index).size(), sizeof(value));
