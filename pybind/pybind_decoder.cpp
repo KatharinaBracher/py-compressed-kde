@@ -3,7 +3,7 @@
 #include "decoder.hpp"
 
 void pybind_decoder(py::module &m) {
-    
+
     py::class_<Decoder>(m, "Decoder",
     R"pbdoc(
         Decoder class.

@@ -24,6 +24,40 @@
 
 #include <memory>
 
+inline std::vector<std::vector<value>> load_prior_from_file(std::string filename, std::string path = ""){
+    HighFive::File file(filename, HighFive::File::ReadOnly);
+    unsigned int nunion;
+    if (path.empty()) {
+        path = "/";
+    }
+
+    HighFive::Group group = file.getGroup(path);
+    // load priors
+    group.getDataSet("nunion").read(nunion);
+    std::vector<std::vector<value>> priors(nunion);
+
+    HighFive::Group grp_priors = group.getGroup("priors");
+
+    for (unsigned int k=0; k<nunion; ++k) {
+        grp_priors.getDataSet("prior" + std::to_string(k)).read(priors[k]);
+    }
+    return priors;
+};
+/**
+ * @brief compute_posterior based on likelihood result with multiple stimulus spaces (unions)
+ * @param result number of unions x grid size
+ * @param normalize
+ */
+void compute_posterior(std::vector<value *> result,
+                       std::vector<std::vector<value>> prior,
+                       std::vector<unsigned int> grid_sizes, bool normalize);
+/**
+ * @brief compute_posterior based on likelihood result with 1 stimulus space
+ * @param result - grid size
+ * @param normalize
+ */
+void compute_posterior(value * result, std::vector<value> prior, unsigned int grid_size, bool normalize);
+
 class Decoder {
 public:
     // constructors
@@ -33,18 +67,53 @@ public:
         const std::vector<std::vector<value>> & prior = {} );
     
     // decoding methods
-    void decode( std::vector<value*> events, std::vector<unsigned int> nevents, 
+
+    /**
+     * @brief decode with multiple sources and multiple union
+     * @param events  each element of the vector is a pointer to an array of events for one source
+     * @param nevents each element of the vector contains the number of event for one source
+     * @param delta_t size of the time bin in which events are observed
+     * @param result pre-initialized to be the size of the number of stimulus space and then contains in each element an array of grid size
+     * @param normalize
+     */
+    void decode( std::vector<value*> events, std::vector<unsigned int> nevents,
         value delta_t, std::vector<value*> result, bool normalize=true );
-    
+
+    /**
+     * @brief decode with multiple sources and 1 stimulus space
+     * @param events  each element of the vector contains the event for one source
+     * @param nevents each element of the vector contains the number of event for one source
+     * @param delta_t size of the time bin in which events are observed
+     * @param result pre-initialized array of grid size
+     * @param index index of the stimulus space
+     * @param normalize
+     */
     void decode ( std::vector<value*> events, std::vector<unsigned int> nevents,
         value delta_t, value* result, unsigned int index=0, bool normalize=true );
-    
+
+    /**
+     * @brief decode with multiple sources with multiple stimulus spaces (union) - used to reshape the events dimension from a std::vector to an array before calling
+     * the decode method upper
+     * @param events first dim is the number of sources, second dim the number of events per source
+     * @param delta_t size of the time bin in which events are observed
+     * @param result pre-initialized to be the size of the number of stimulus space and then contains in each element an array of grid size (?)
+     * @param normalize
+     */
     void decode ( std::vector<std::vector<value>> events, value delta_t,
         std::vector<value*> result, bool normalize=true );
-    
+
+    /**
+     * @brief decode with multiple sources with 1 stimulus space - used to reshape the events dimension from a std::vector to an array before calling
+     * the decode method upper
+     * @param events first dim is the number of sources, second dim the number of events per source
+     * @param delta_t size of the time bin in which events are observed
+     * @param result pre-initialized array of grid size
+     * @param normalize
+     */
     void decode ( std::vector<std::vector<value>> events, value delta_t,
         value* result, unsigned int index=0, bool normalize=true );
-    
+
+
     // properties
     unsigned int nsources() const;
     bool is_union() const;

@@ -45,7 +45,8 @@ public:
     
     // clone
     virtual Kernel * clone() const { throw std::runtime_error("not implemented"); }
-    
+    virtual ~Kernel(){};
+
     KernelType type() const;
     virtual std::string to_string() const { return kerneltype_tostring(type()); }
     
