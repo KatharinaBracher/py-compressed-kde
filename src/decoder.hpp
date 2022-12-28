@@ -34,7 +34,6 @@ inline std::vector<std::vector<value>> load_prior_from_file(std::string filename
     HighFive::Group group = file.getGroup(path);
     // load priors
     group.getDataSet("nunion").read(nunion);
-
     std::vector<std::vector<value>> priors(nunion);
 
     HighFive::Group grp_priors = group.getGroup("priors");
@@ -120,8 +119,6 @@ public:
     bool is_union() const;
     unsigned int n_union() const;
     unsigned int grid_size(unsigned int index=0) const;
-    std::vector<std::vector<value>> prior() const {return prior_;}
-
     const std::vector<unsigned int> & grid_sizes() const;
     
     std::vector<long unsigned int> grid_shape(unsigned int index=0) const;

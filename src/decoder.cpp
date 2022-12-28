@@ -163,34 +163,23 @@ void Decoder::decode( std::vector<value*> events, std::vector<unsigned int> neve
     if (result.size()!=n_union()) {
         std::runtime_error("Incorrect number of outputs.");
     }
-    std::vector<std::vector<double*>> logL(grid_size());
+    
     unsigned int n;
-    #pragma omp parallel for
     for (unsigned int source=0; source<nsources(); ++source) {
         
         if (!likelihood_selection_[source]) {continue;}
-
+        
         // determine number of spikes for source
         n = nevents[source]/likelihoods_[source][0]->ndim_events();
         if ( n * likelihoods_[source][0]->ndim_events() != nevents[source] ) {
             throw std::runtime_error("Incomplete samples.");
         }
-
+        
         for (unsigned int index=0; index<n_union(); ++index) {
-            std::fill(logL[source][index], logL[source][index]+grid_size(), 0);
-            likelihoods_[source][index]->logL( events[source], n, delta_t, logL[source][index]);
+            likelihoods_[source][index]->logL( events[source], n, delta_t, result[index] );
         }
     }
-
-    // Merge all logL sources by summation
-    for (unsigned int source=0; source<nsources(); ++source) {
-        for (unsigned int index=0; index<n_union(); ++index){
-            std::transform(result[index], result[index]+grid_size(),logL[source][index],
-                           result[index], std::plus<double>());
-        }
-    }
-
-
+    
     compute_posterior(result, prior_, grid_sizes_, normalize);
 
 }
@@ -222,29 +211,21 @@ void Decoder::decode( std::vector<value*> events, std::vector<unsigned int> neve
         throw std::runtime_error("Union index out of bounds.");
     }
     
-//unsigned int n;
-    std::vector<double*> logL(grid_size());
-#pragma omp parallel for
+    unsigned int n;
+    
     for (unsigned int source=0; source<nsources(); ++source) {
         
         if (!likelihood_selection_[source]) {continue;}
         
-        unsigned int  n = nevents[source]/likelihoods_[source][0]->ndim_events();
+        n = nevents[source]/likelihoods_[source][0]->ndim_events();
         if ( n * likelihoods_[source][0]->ndim_events() != nevents[source] ) {
             throw std::runtime_error("Incomplete samples.");
         }
         
         // sum log likelihoods
-        std::fill(logL[source], logL[source]+grid_size(), 0);
-        likelihoods_[source][index]->logL( events[source], n, delta_t, logL[source] );
+        likelihoods_[source][index]->logL( events[source], n, delta_t, result );
     }
-
-    // Merge all logL sources by summation
-    for (unsigned int source=0; source<nsources(); ++source) {
-        std::transform(result, result+grid_size(),logL[source],
-                           result, std::plus<double>());
-    }
-
+    
     compute_posterior(result, prior_[index], grid_sizes_[index], normalize);
 }
 
