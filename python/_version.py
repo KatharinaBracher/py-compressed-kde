@@ -1,1 +1,1 @@
-__version__ = "test-decoding"
+__version__ = "0.4.2"
