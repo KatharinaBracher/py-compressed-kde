@@ -105,7 +105,7 @@ setup(
             "compressed_kde.decode": os.path.join(root_path,"compressed_kde/decode"),
             
             },
-    install_requires=['h5py', 'pyyaml', 'flatbuffers'],
+    install_requires=['h5py', 'pyyaml', 'flatbuffers', 'pybind11'],
     ext_modules = extensions,
     cmdclass = {'build_ext': my_build_ext},
     license_files = ( os.path.join(root_path,'../LICENSE.txt'))
