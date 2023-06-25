@@ -27,11 +27,6 @@ class my_build_ext(build_ext):
 # helper class to get include directories for pybind11
 class get_pybind_include(object):
     def __init__(self, user=False):
-        try:
-            import pybind11
-        except ImportError:
-            if subprocess.call([sys.executable, '-m', 'pip', 'install', 'pybind11']):
-                raise RuntimeError('pybind11 install failed.')
         self.user = user
     
     def __iter__(self):
