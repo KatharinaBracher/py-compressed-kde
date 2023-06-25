@@ -7,6 +7,7 @@ from distutils.sysconfig import get_config_var, customize_compiler
 import glob
 import os
 import sys
+import subprocess
 
 root_path = os.path.dirname(__file__)
 
