@@ -58,7 +58,7 @@ include_dirs = [
     generated_path,
     os.path.join(hgf_path, 'include'),
     get_config_var('INCLUDEDIR'),
-    get_pybind_include(), get_pybind_include(user=True)
+    get_pybind_include(), get_pybind_include(user=True), # If compiling against Ubuntu's hdf5, add "/usr/include/hdf5/serial"
 ]
 
 library_dirs = []
@@ -77,7 +77,7 @@ extensions = [
     Extension(
         "compressed_kde.compressed_kde",
         sources = sources,
-        libraries = ['yaml-cpp', 'hdf5', 'flatbuffers'],
+        libraries = ['yaml-cpp', 'hdf5', 'flatbuffers'], # If compiling against Ubuntu's hdf5, use hdf5_serial
         include_dirs = include_dirs,
         library_dirs = library_dirs,
         language = "c++",
